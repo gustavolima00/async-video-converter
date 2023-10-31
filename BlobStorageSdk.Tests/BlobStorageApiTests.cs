@@ -9,6 +9,7 @@ using Moq;
 using Moq.Protected;
 using Xunit;
 using BlobStorageSdk;
+using System.IO;
 
 namespace BlobStorageSdk.Tests;
 
@@ -60,5 +61,32 @@ public class BlobStorageApiTests
         Assert.Equal(4096, result[0].Size);
         Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result[0].LastModified);
         Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result[0].CreatedAt);
+    }
+
+    [Fact]
+    public async Task TestUploadFileAsync()
+    {
+        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StringContent(
+                @"{
+                    ""created_at"": ""2023-10-31T15:42:28"",
+                    ""last_modified"": ""2023-10-31T15:42:28"",
+                    ""name"": ""uploaded_file.pdf"",
+                    ""path"": ""folder/uploaded_file.pdf"",
+                    ""size"": 4096,
+                    ""type"": ""file""
+                }",
+                Encoding.UTF8,
+                "application/json"
+            )
+        };
+        var blobStorageApi = buildBlobStorageApiInstance(mockResponse);
+        var result = await blobStorageApi.UploadFileAsync(new MemoryStream(), "uploaded_file.pdf", "folder");
+        Assert.Equal("uploaded_file.pdf", result.Name);
+        Assert.Equal("file", result.Type);
+        Assert.Equal(4096, result.Size);
+        Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.LastModified);
+        Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.CreatedAt);
     }
 }
