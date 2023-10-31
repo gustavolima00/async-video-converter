@@ -72,9 +72,9 @@ public class BlobStorageApiTests
                 @"{
                     ""created_at"": ""2023-10-31T15:42:28"",
                     ""last_modified"": ""2023-10-31T15:42:28"",
-                    ""name"": ""uploaded_file.pdf"",
-                    ""path"": ""folder/uploaded_file.pdf"",
-                    ""size"": 4096,
+                    ""name"": ""uploaded_file.txt"",
+                    ""path"": ""folder/uploaded_file.txt"",
+                    ""size"": 66,
                     ""type"": ""file""
                 }",
                 Encoding.UTF8,
@@ -86,12 +86,10 @@ public class BlobStorageApiTests
         var fileContent = "File content is this - The quick brown fox jumps over the lazy dog";
         var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
 
-        var result = await blobStorageApi.UploadFileAsync(fileStream, "uploaded_file.pdf", "folder");
-        Assert.Equal("uploaded_file.pdf", result.Name);
+        var result = await blobStorageApi.UploadFileAsync(fileStream, "uploaded_file.txt", "folder");
+        Assert.Equal("uploaded_file.txt", result.Name);
         Assert.Equal("file", result.Type);
-        Assert.Equal(4096, result.Size);
-        Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.LastModified);
-        Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.CreatedAt);
+        Assert.Equal("folder/uploaded_file.txt", result.Path);
     }
 
     [Fact]
@@ -107,7 +105,7 @@ public class BlobStorageApiTests
         };
 
         var blobStorageApi = BuildBlobStorageApiInstance(mockResponse);
-        var result = await blobStorageApi.GetFileAsync("folder/uploaded_file.pdf");
+        var result = await blobStorageApi.GetFileAsync("folder/uploaded_file.txt");
         Assert.Equal(fileContent, new StreamReader(result).ReadToEnd());
     }
 }

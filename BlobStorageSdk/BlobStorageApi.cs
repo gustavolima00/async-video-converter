@@ -52,7 +52,7 @@ public class BlobStorageApi : IBlobStorageApi
         };
 
         // Envie a requisição POST
-        var response = await _httpClient.PostAsync($"{_baseApiUrl}/upload?path={Uri.EscapeDataString(destinationPath)}", content);
+        var response = await _httpClient.PostAsync($"{_baseApiUrl}/upload?folder_path={Uri.EscapeDataString(destinationPath)}", content);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -65,7 +65,7 @@ public class BlobStorageApi : IBlobStorageApi
     }
 
     public async Task<Stream> GetFileAsync(string filePath){
-        var response = await _httpClient.GetAsync($"{_baseApiUrl}/get-file?path={Uri.EscapeDataString(filePath)}");
+        var response = await _httpClient.GetAsync($"{_baseApiUrl}/get-file?file_path={Uri.EscapeDataString(filePath)}");
 
         if (!response.IsSuccessStatusCode)
         {
