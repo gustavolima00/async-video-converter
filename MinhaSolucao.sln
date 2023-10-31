@@ -9,9 +9,9 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Workers", "Workers\Workers.
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Services", "Services\Services.csproj", "{EFED2C43-CD9B-4C66-BCDA-0486BC7A1206}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileManager.Tests", "FileManager.Tests\FileManager.Tests.csproj", "{E38F7C06-C06B-45F6-B823-FBDE2B140F91}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageSdk.Tests", "BlobStorageSdk.Tests\BlobStorageSdk.Tests.csproj", "{E38F7C06-C06B-45F6-B823-FBDE2B140F91}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "FileManager", "FileManager\FileManager.csproj", "{5AC18170-5928-4973-BF47-17F5DE82DE3B}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageSdk", "BlobStorageSdk\BlobStorageSdk.csproj", "{5AC18170-5928-4973-BF47-17F5DE82DE3B}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

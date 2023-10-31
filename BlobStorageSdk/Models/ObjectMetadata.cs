@@ -1,4 +1,4 @@
-namespace FileManager.Models;
+namespace BlobStorageSdk.Models;
 using System.Text.Json.Serialization;
 
 public class ObjectMetadata

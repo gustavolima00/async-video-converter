@@ -22,7 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\FileManager\FileManager.csproj" />
+    <ProjectReference Include="..\BlobStorageSdk\BlobStorageSdk.csproj" />
   </ItemGroup>
 
 </Project>
