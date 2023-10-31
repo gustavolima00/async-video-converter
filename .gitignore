@@ -1,0 +1,47 @@
+# Arquivos de build e binários
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Arquivos gerados por Visual Studio
+.vs/
+.vscode/
+
+# Pacotes NuGet
+*.nupkg
+# Pasta de pacotes NuGet
+packages/
+
+# Arquivos de configuração do usuário
+*.user
+*.userosscache
+*.suo
+*.userprefs
+
+# Arquivos de cache do Mono
+mono_crash.*
+
+# Arquivos de configuração do Rider
+.idea/
+
+# Arquivos temporários
+[Tt]emp/
+[Tt]mp/
+
+# Arquivos de saída
+[Oo]ut/
+
+# Arquivos de backup
+*.bak
+*.bak.*
+*.cache
+*.csproj.user
+*.log
+*.orig
+*.patch
+*.pidb
+*.swp
+*.userprefs
+*.userprefs.*
+*~
