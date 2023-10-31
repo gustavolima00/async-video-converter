@@ -1,7 +1,4 @@
-﻿using System;
-using System.Net.Http;
-using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
+﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using BlobStorageSdk.Models;
 
@@ -18,6 +15,7 @@ public interface IBlobStorageApi
 {
     Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix);
     Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath);
+    Task<Stream> GetFileAsync(string filePath);
 }
 
 public class BlobStorageApi : IBlobStorageApi
@@ -64,5 +62,16 @@ public class BlobStorageApi : IBlobStorageApi
         var responseStream = await response.Content.ReadAsStreamAsync();
         var result = await JsonSerializer.DeserializeAsync<ObjectMetadata>(responseStream) ?? throw new BlobStorageApiException($"Falha ao desserializar resposta. Status code: {response.StatusCode}");
         return result;
+    }
+
+    public async Task<Stream> GetFileAsync(string filePath){
+        var response = await _httpClient.GetAsync($"{_baseApiUrl}/get-file?path={Uri.EscapeDataString(filePath)}");
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new BlobStorageApiException($"Falha ao fazer download do arquivo. Status code: {response.StatusCode}");
+        }
+
+        return await response.Content.ReadAsStreamAsync();
     }
 }

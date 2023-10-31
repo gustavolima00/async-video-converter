@@ -15,7 +15,7 @@ namespace BlobStorageSdk.Tests;
 
 public class BlobStorageApiTests
 {
-    public static IBlobStorageApi buildBlobStorageApiInstance(HttpResponseMessage mockApiResponse)
+    public static IBlobStorageApi BuildBlobStorageApiInstance(HttpResponseMessage mockApiResponse)
     {
         var httpClient = new HttpClient();
         var configurationMock = new Mock<IConfiguration>();
@@ -53,7 +53,7 @@ public class BlobStorageApiTests
                 "application/json"
             )
         };
-        var blobStorageApi = buildBlobStorageApiInstance(mockResponse);
+        var blobStorageApi = BuildBlobStorageApiInstance(mockResponse);
         var result = await blobStorageApi.ListFilesAndFoldersAsync(".");
         Assert.Single(result);
         Assert.Equal("abc", result[0].Name);
@@ -81,12 +81,33 @@ public class BlobStorageApiTests
                 "application/json"
             )
         };
-        var blobStorageApi = buildBlobStorageApiInstance(mockResponse);
-        var result = await blobStorageApi.UploadFileAsync(new MemoryStream(), "uploaded_file.pdf", "folder");
+        var blobStorageApi = BuildBlobStorageApiInstance(mockResponse);
+
+        var fileContent = "File content is this - The quick brown fox jumps over the lazy dog";
+        var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
+
+        var result = await blobStorageApi.UploadFileAsync(fileStream, "uploaded_file.pdf", "folder");
         Assert.Equal("uploaded_file.pdf", result.Name);
         Assert.Equal("file", result.Type);
         Assert.Equal(4096, result.Size);
         Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.LastModified);
         Assert.Equal(new DateTime(2023, 10, 31, 15, 42, 28), result.CreatedAt);
+    }
+
+    [Fact]
+    public async Task TestGetFileAsync()
+    {
+        var fileContent = "File content is this - The quick brown fox jumps over the lazy dog";
+        var fileStream = new MemoryStream(Encoding.UTF8.GetBytes(fileContent));
+
+        // Mock da resposta HTTP
+        var mockResponse = new HttpResponseMessage(HttpStatusCode.OK)
+        {
+            Content = new StreamContent(fileStream)
+        };
+
+        var blobStorageApi = BuildBlobStorageApiInstance(mockResponse);
+        var result = await blobStorageApi.GetFileAsync("folder/uploaded_file.pdf");
+        Assert.Equal(fileContent, new StreamReader(result).ReadToEnd());
     }
 }
