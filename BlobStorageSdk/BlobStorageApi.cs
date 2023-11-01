@@ -1,5 +1,4 @@
-﻿using Microsoft.Extensions.Configuration;
-using System.Text.Json;
+﻿using System.Text.Json;
 using BlobStorageSdk.Models;
 using System.Web;
 
@@ -19,7 +18,7 @@ public interface IBlobStorageApi
     Task<Stream> GetFileAsync(string filePath);
 }
 
-public class BlobStorageApi : IBlobStorageApi
+class BlobStorageApi : IBlobStorageApi
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseApiUrl;

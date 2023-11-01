@@ -1,6 +1,6 @@
 namespace BlobStorageSdk.Models;
 
-public class BlobStorageSdkConfiguration
+class BlobStorageSdkConfiguration
 {
     public string BlobStorageUrl { get; set; } = "";
 }

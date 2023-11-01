@@ -15,7 +15,6 @@ public static class Register
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        // Registering other projects
         services.RegisterBlobStorageSdkProject(configuration.GetProjectConfigurationSection(nameof(BlobStorageSdk)));
         services.RegisterRepositoriesProject(configuration.GetProjectConfigurationSection(nameof(Repositories)));
         services.RegisterServicesProject();
