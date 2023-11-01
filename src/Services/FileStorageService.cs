@@ -7,7 +7,7 @@ namespace Services;
 
 public interface IFileStorageService
 {
-    Task SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<RawFile> SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
 }
 
 public class FileStorageService : IFileStorageService
@@ -35,9 +35,9 @@ public class FileStorageService : IFileStorageService
         return rawFile;
     }
 
-    public async Task SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawFile> SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageApi.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        await GetOrCreateFile(fileMetadata, cancellationToken);
+        return await GetOrCreateFile(fileMetadata, cancellationToken);
     }
 }

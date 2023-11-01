@@ -30,12 +30,9 @@ public class FileConversionController : ControllerBase
 
         try
         {
-            using (var stream = file.OpenReadStream())
-            {
-                await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
-            }
-
-            return Ok("Arquivo recebido e está na fila de conversão.");
+            using var stream = file.OpenReadStream();
+            var fileDetails = await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
+            return Ok(fileDetails);
         }
         catch (Exception ex)
         {

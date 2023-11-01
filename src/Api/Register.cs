@@ -1,6 +1,7 @@
 using BlobStorageSdk;
 using Services;
 using Repositories;
+using Microsoft.AspNetCore.Http.Features;
 
 namespace Api;
 
@@ -21,6 +22,12 @@ public static class Register
 
         services.AddControllers();
         services.AddEndpointsApiExplorer();
+
+        services.Configure<FormOptions>(options =>
+        {
+            options.ValueLengthLimit = int.MaxValue;
+            options.MultipartBodyLengthLimit = int.MaxValue;
+        });
 
         return services;
     }
