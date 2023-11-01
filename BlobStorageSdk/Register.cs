@@ -15,7 +15,7 @@ public static class Register
         return config;
     }
 
-    public static IServiceCollection RegisterBlobStorageSdk(
+    public static IServiceCollection RegisterBlobStorageSdkProject(
         this IServiceCollection services,
         IConfigurationSection configuration)
     {

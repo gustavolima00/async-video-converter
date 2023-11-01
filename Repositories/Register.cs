@@ -13,7 +13,7 @@ public static class Register
         return config;
     }
 
-    public static IServiceCollection RegisterRepositories(
+    public static IServiceCollection RegisterRepositoriesProject(
         this IServiceCollection services,
         IConfigurationSection configuration)
     {
