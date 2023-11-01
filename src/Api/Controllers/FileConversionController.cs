@@ -16,7 +16,7 @@ public class FileConversionController : ControllerBase
     }
 
     [HttpPost("send-file")]
-    public async Task<IActionResult> SendFileToConversion(IFormFile file, [FromQuery] string fileName)
+    public async Task<IActionResult> SendFileToConversion(IFormFile file, [FromQuery] string fileName, CancellationToken cancellationToken)
     {
         if (file == null || file.Length == 0)
         {
@@ -32,7 +32,7 @@ public class FileConversionController : ControllerBase
         {
             using (var stream = file.OpenReadStream())
             {
-                await _fileStorageService.SaveFileToConvertAsync(stream, fileName);
+                await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
             }
 
             return Ok("Arquivo recebido e está na fila de conversão.");
