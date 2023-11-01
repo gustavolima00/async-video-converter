@@ -18,7 +18,8 @@ public static class Register
         IConfigurationSection configuration)
     {
         services.AddSingleton(BuildPostgresConfiguration(configuration.GetSection(nameof(PostgresConfiguration))));
-        services.AddSingleton<RawFilesContext>();
+        services.AddSingleton<IDatabaseConnection, DatabaseConnection>();
+        services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<IRawFilesRepository, RawFilesRepository>();
         return services;
     }
