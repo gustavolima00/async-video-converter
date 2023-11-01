@@ -4,12 +4,11 @@ using System.Net.Http;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Configuration;
 using Moq;
 using Moq.Protected;
 using Xunit;
-using BlobStorageSdk;
 using System.IO;
+using BlobStorageSdk.Models;
 
 namespace BlobStorageSdk.Tests;
 
@@ -18,8 +17,10 @@ public class BlobStorageApiTests
     public static IBlobStorageApi BuildBlobStorageApiInstance(HttpResponseMessage mockApiResponse)
     {
         var httpClient = new HttpClient();
-        var configurationMock = new Mock<IConfiguration>();
-        configurationMock.SetupGet(c => c["FILE_MANAGER_API_BASE_URL"]).Returns("http://mock-blob-storage");
+        var configuration = new BlobStorageSdkConfiguration
+        {
+            BlobStorageUrl = "https://blob-storage-api.com"
+        };
 
         var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
         mockHttpMessageHandler.Protected()
@@ -30,7 +31,7 @@ public class BlobStorageApiTests
             )
             .ReturnsAsync(mockApiResponse);
         httpClient = new HttpClient(mockHttpMessageHandler.Object);
-        return new BlobStorageApi(httpClient, configurationMock.Object);
+        return new BlobStorageApi(httpClient, configuration);
     }
 
     [Fact]

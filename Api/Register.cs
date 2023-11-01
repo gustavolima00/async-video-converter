@@ -1,3 +1,7 @@
+using BlobStorageSdk;
+using BlobStorageSdk.Models;
+using Services;
+
 namespace Api;
 
 public static class Register
@@ -10,6 +14,9 @@ public static class Register
         services.AddEndpointsApiExplorer();
 
         services.AddEndpointsApiExplorer();
+
+        services.RegisterBlobStorageSdk(configuration.GetSection(nameof(BlobStorageSdkConfiguration)));
+
         return services;
     }
 }

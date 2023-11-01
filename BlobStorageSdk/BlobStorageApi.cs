@@ -23,10 +23,10 @@ public class BlobStorageApi : IBlobStorageApi
     private readonly HttpClient _httpClient;
     private readonly string _baseApiUrl;
 
-    public BlobStorageApi(HttpClient httpClient, IConfiguration configuration)
+    public BlobStorageApi(HttpClient httpClient, BlobStorageSdkConfiguration configuration)
     {
         _httpClient = httpClient;
-        _baseApiUrl = configuration["FILE_MANAGER_API_BASE_URL"] ?? "";
+        _baseApiUrl = configuration.BlobStorageUrl;
     }
 
     public async Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix)
@@ -64,7 +64,8 @@ public class BlobStorageApi : IBlobStorageApi
         return result;
     }
 
-    public async Task<Stream> GetFileAsync(string filePath){
+    public async Task<Stream> GetFileAsync(string filePath)
+    {
         var response = await _httpClient.GetAsync($"{_baseApiUrl}/get-file?file_path={Uri.EscapeDataString(filePath)}");
 
         if (!response.IsSuccessStatusCode)
