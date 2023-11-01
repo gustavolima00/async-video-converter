@@ -1,6 +1,6 @@
 using BlobStorageSdk;
-using BlobStorageSdk.Models;
 using Services;
+using Repositories;
 
 namespace Api;
 
@@ -15,7 +15,8 @@ public static class Register
 
         services.AddEndpointsApiExplorer();
 
-        services.RegisterBlobStorageSdk(configuration.GetSection(nameof(BlobStorageSdkConfiguration)));
+        services.RegisterBlobStorageSdk(configuration.GetSection(nameof(BlobStorageSdk) + "Configuration"));
+        services.RegisterRepositories(configuration.GetSection(nameof(Repositories) + "Configuration"));
         services.AddSingleton<IFileStorageService, FileStorageService>();
 
         return services;
