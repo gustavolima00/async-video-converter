@@ -19,7 +19,6 @@ public static class Register
     {
         services.AddSingleton(BuildPostgresConfiguration(configuration.GetSection(nameof(PostgresConfiguration))));
         services.AddSingleton<IDatabaseConnection, DatabaseConnection>();
-        services.AddSingleton<IDatabaseService, DatabaseService>();
         services.AddSingleton<IRawFilesRepository, RawFilesRepository>();
         return services;
     }

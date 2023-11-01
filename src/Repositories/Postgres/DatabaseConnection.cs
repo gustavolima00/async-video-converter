@@ -1,14 +1,13 @@
 using Npgsql;
+
 namespace Repositories.Postgres;
 
-interface IDatabaseConnection
+public interface IDatabaseConnection
 {
     NpgsqlConnection GetConnection();
-
-    
 }
 
-class DatabaseConnection : IDatabaseConnection
+public class DatabaseConnection : IDatabaseConnection
 {
     private readonly PostgresConfiguration _configuration;
 

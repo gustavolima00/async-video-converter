@@ -18,7 +18,7 @@ public interface IBlobStorageApi
     Task<Stream> GetFileAsync(string filePath);
 }
 
-class BlobStorageApi : IBlobStorageApi
+public class BlobStorageApi : IBlobStorageApi
 {
     private readonly HttpClient _httpClient;
     private readonly string _baseApiUrl;
