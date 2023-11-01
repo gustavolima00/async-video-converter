@@ -4,6 +4,8 @@ namespace Repositories.Postgres;
 interface IDatabaseConnection
 {
     NpgsqlConnection GetConnection();
+
+    
 }
 
 class DatabaseConnection : IDatabaseConnection
