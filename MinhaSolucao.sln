@@ -13,6 +13,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageSdk.Tests", "Blo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BlobStorageSdk", "BlobStorageSdk\BlobStorageSdk.csproj", "{5AC18170-5928-4973-BF47-17F5DE82DE3B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Repositories", "Repositories\Repositories.csproj", "{A71D5443-37B9-4F7C-8376-19553B97F0D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -42,5 +44,9 @@ Global
 		{5AC18170-5928-4973-BF47-17F5DE82DE3B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{5AC18170-5928-4973-BF47-17F5DE82DE3B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{5AC18170-5928-4973-BF47-17F5DE82DE3B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A71D5443-37B9-4F7C-8376-19553B97F0D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A71D5443-37B9-4F7C-8376-19553B97F0D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A71D5443-37B9-4F7C-8376-19553B97F0D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A71D5443-37B9-4F7C-8376-19553B97F0D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
