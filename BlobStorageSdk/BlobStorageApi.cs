@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.Configuration;
 using System.Text.Json;
 using BlobStorageSdk.Models;
+using System.Web;
 
 namespace BlobStorageSdk;
 
@@ -29,10 +30,28 @@ public class BlobStorageApi : IBlobStorageApi
         _baseApiUrl = configuration.BlobStorageUrl;
     }
 
+    private string BuildUrl(string path, Dictionary<string, string> queryParameters)
+    {
+        var builder = new UriBuilder($"{_baseApiUrl}{path}");
+        var query = HttpUtility.ParseQueryString(builder.Query);
+
+        foreach (var (key, value) in queryParameters)
+        {
+            query[key] = value;
+        }
+
+        builder.Query = query.ToString();
+        return builder.ToString();
+    }
+
     public async Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix)
     {
+        var requestUri = BuildUrl("/list", new()
+        {
+            ["path_prefix"] = pathPrefix
+        });
 
-        var response = await _httpClient.GetAsync($"{_baseApiUrl}/list?path_prefix={Uri.EscapeDataString(pathPrefix)}");
+        var response = await _httpClient.GetAsync(requestUri);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -50,9 +69,13 @@ public class BlobStorageApi : IBlobStorageApi
         {
             { new StreamContent(fileStream), "file", fileName }
         };
+        var requestUri = BuildUrl("/upload", new()
+        {
+            ["folder_path"] = destinationPath,
+            ["file_name"] = fileName
+        });
 
-        // Envie a requisição POST
-        var response = await _httpClient.PostAsync($"{_baseApiUrl}/upload?folder_path={Uri.EscapeDataString(destinationPath)}", content);
+        var response = await _httpClient.PostAsync(requestUri, content);
 
         if (!response.IsSuccessStatusCode)
         {
@@ -66,7 +89,12 @@ public class BlobStorageApi : IBlobStorageApi
 
     public async Task<Stream> GetFileAsync(string filePath)
     {
-        var response = await _httpClient.GetAsync($"{_baseApiUrl}/get-file?file_path={Uri.EscapeDataString(filePath)}");
+        var requestUri = BuildUrl("/get-file", new()
+        {
+            ["file_path"] = filePath
+        });
+
+        var response = await _httpClient.GetAsync(requestUri);
 
         if (!response.IsSuccessStatusCode)
         {
