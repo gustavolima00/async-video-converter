@@ -16,6 +16,7 @@ public static class Register
         services.AddEndpointsApiExplorer();
 
         services.RegisterBlobStorageSdk(configuration.GetSection(nameof(BlobStorageSdkConfiguration)));
+        services.AddSingleton<IFileStorageService, FileStorageService>();
 
         return services;
     }
