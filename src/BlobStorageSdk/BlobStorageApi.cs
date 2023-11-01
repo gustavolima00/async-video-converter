@@ -13,9 +13,9 @@ public class BlobStorageApiException : Exception
 
 public interface IBlobStorageApi
 {
-    Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix);
-    Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath);
-    Task<Stream> GetFileAsync(string filePath);
+    Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix, CancellationToken cancellationToken = default);
+    Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath, CancellationToken cancellationToken = default);
+    Task<Stream> GetFileAsync(string filePath, CancellationToken cancellationToken = default);
 }
 
 public class BlobStorageApi : IBlobStorageApi
@@ -29,7 +29,7 @@ public class BlobStorageApi : IBlobStorageApi
         _baseApiUrl = configuration.BlobStorageUrl;
     }
 
-    private string BuildUrl(string path, Dictionary<string, string>? queryParameters)
+    private string BuildUrl(string path, Dictionary<string, string>? queryParameters = null)
     {
         var builder = new UriBuilder($"{_baseApiUrl}{path}");
         var query = HttpUtility.ParseQueryString(builder.Query);
@@ -46,14 +46,14 @@ public class BlobStorageApi : IBlobStorageApi
         return builder.ToString();
     }
 
-    private async Task<HttpContent> GetAsync(string path, Dictionary<string, string>? queryParameters = null)
+    private async Task<HttpContent> GetAsync(string path, Dictionary<string, string>? queryParameters = null, CancellationToken cancellationToken = default)
     {
         var requestUri = BuildUrl(path, queryParameters);
-        var response = await _httpClient.GetAsync(requestUri);
+        var response = await _httpClient.GetAsync(requestUri, cancellationToken);
 
         if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
         {
-            var errorResponse = await response.Content.ReadAsStringAsync();
+            var errorResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new BlobStorageApiException($"Erro na requisição: {errorResponse}");
         }
         if (!response.IsSuccessStatusCode)
@@ -64,22 +64,31 @@ public class BlobStorageApi : IBlobStorageApi
         return response.Content;
     }
 
-    private async Task<Response> GetAndDeserializeAsync<Response>(string path, Dictionary<string, string>? queryParameters = null)
+    private async Task<Response> GetAndDeserializeAsync<Response>(
+        string path,
+        Dictionary<string, string>? queryParameters = null,
+        CancellationToken cancellationToken = default
+    )
     {
-        var response = await GetAsync(path, queryParameters);
-        var responseStream = await response.ReadAsStreamAsync();
-        return await JsonSerializer.DeserializeAsync<Response>(responseStream) ?? throw new BlobStorageApiException($"Falha ao desserializar resposta");
+        var response = await GetAsync(path, queryParameters, cancellationToken);
+        var responseStream = await response.ReadAsStreamAsync(cancellationToken);
+        return await JsonSerializer.DeserializeAsync<Response>(responseStream, cancellationToken: cancellationToken) ?? throw new BlobStorageApiException($"Falha ao desserializar resposta");
     }
 
-    private async Task<Response> PostAndDeserializeAsync<Response>(string path, HttpContent? content = null, Dictionary<string, string>? queryParameters = null)
+    private async Task<Response> PostAndDeserializeAsync<Response>(
+        string path,
+        HttpContent? content = null,
+        Dictionary<string, string>? queryParameters = null,
+        CancellationToken cancellationToken = default
+    )
     {
 
         var requestUri = BuildUrl(path, queryParameters);
-        var response = await _httpClient.PostAsync(requestUri, content);
+        var response = await _httpClient.PostAsync(requestUri, content, cancellationToken);
 
         if (response.StatusCode == System.Net.HttpStatusCode.BadRequest)
         {
-            var errorResponse = await response.Content.ReadAsStringAsync();
+            var errorResponse = await response.Content.ReadAsStringAsync(cancellationToken);
             throw new BlobStorageApiException($"Erro na requisição: {errorResponse}");
         }
         if (!response.IsSuccessStatusCode)
@@ -87,22 +96,20 @@ public class BlobStorageApi : IBlobStorageApi
             throw new BlobStorageApiException($"Falha ao listar arquivos e pastas. Status code: {response.StatusCode}");
         }
 
-        var responseStream = await response.Content.ReadAsStreamAsync();
-        return await JsonSerializer.DeserializeAsync<Response>(responseStream) ?? throw new BlobStorageApiException($"Falha ao desserializar resposta");
+        var responseStream = await response.Content.ReadAsStreamAsync(cancellationToken);
+        return await JsonSerializer.DeserializeAsync<Response>(responseStream, cancellationToken: cancellationToken) ?? throw new BlobStorageApiException($"Falha ao desserializar resposta");
     }
 
-    public async Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix)
+    public async Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix, CancellationToken cancellationToken = default)
     {
-        return await GetAndDeserializeAsync<List<ObjectMetadata>>(
-            "/list",
-            new()
-            {
-                ["path_prefix"] = pathPrefix
-            }
-        );
+        return await GetAndDeserializeAsync<List<ObjectMetadata>>("/list", new()
+        {
+            ["path_prefix"] = pathPrefix
+        }
+        , cancellationToken);
     }
 
-    public async Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath)
+    public async Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath, CancellationToken cancellationToken = default)
     {
         using var content = new MultipartFormDataContent
         {
@@ -113,15 +120,15 @@ public class BlobStorageApi : IBlobStorageApi
         {
             ["folder_path"] = destinationPath,
             ["file_name"] = fileName
-        });
+        }, cancellationToken);
     }
 
-    public async Task<Stream> GetFileAsync(string filePath)
+    public async Task<Stream> GetFileAsync(string filePath, CancellationToken cancellationToken = default)
     {
         var response = await GetAsync("/get-file", new()
         {
             ["file_path"] = filePath
-        });
-        return await response.ReadAsStreamAsync();
+        }, cancellationToken);
+        return await response.ReadAsStreamAsync(cancellationToken);
     }
 }

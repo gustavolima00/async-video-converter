@@ -6,72 +6,81 @@ namespace Repositories;
 
 public interface IRawFilesRepository
 {
-    Task<IEnumerable<RawFile>> GetAll();
-    Task<RawFile?> TryGetById(int id);
-    Task Create(RawFile rawFile);
+    Task<RawFile?> TryGetById(int id, CancellationToken cancellationToken = default);
+    Task<RawFile?> TryGetByPath(string path, CancellationToken cancellationToken = default);
+    Task<RawFile> Create(RawFile rawFile, CancellationToken cancellationToken = default);
 }
 
 class RawFilesRepository : IRawFilesRepository
 {
     private readonly IDatabaseConnection _databaseConnection;
+    private readonly string _rawFileFields = "id, name, path";
+
     public RawFilesRepository(IDatabaseConnection databaseConnection)
     {
         _databaseConnection = databaseConnection;
     }
 
-
-    public async Task<IEnumerable<RawFile>> GetAll()
+    private static RawFile ReadRawFile(NpgsqlDataReader reader)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync();
-
-        await using var command = new NpgsqlCommand("SELECT id, name, url FROM raw_files", connection);
-        var reader = await command.ExecuteReaderAsync();
-
-        var rawFiles = new List<RawFile>();
-
-        while (await reader.ReadAsync())
-        {
-            rawFiles.Add(new RawFile
-            {
-                Id = reader.GetInt32(0),
-                Name = reader.GetString(1),
-                Url = reader.GetString(2),
-            });
-        }
-        return rawFiles;
-    }
-
-    public async Task<RawFile?> TryGetById(int id)
-    {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync();
-
-        await using var command = new NpgsqlCommand("SELECT id, name, url FROM raw_files WHERE id = @id", connection);
-        command.Parameters.AddWithValue("id", id);
-        var reader = await command.ExecuteReaderAsync();
-
-        if (!await reader.ReadAsync())
-        {
-            return null;
-        }
-
         return new RawFile
         {
             Id = reader.GetInt32(0),
             Name = reader.GetString(1),
-            Url = reader.GetString(2),
+            Path = reader.GetString(2),
         };
     }
 
-    public async Task Create(RawFile rawFile)
+    public async Task<RawFile?> TryGetById(int id, CancellationToken cancellationToken = default)
     {
         await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync();
+        await connection.OpenAsync(cancellationToken);
 
-        await using var command = new NpgsqlCommand("INSERT INTO raw_files (name, url) VALUES (@name, @url)", connection);
+        await using var command = new NpgsqlCommand("SELECT " + _rawFileFields + " FROM raw_files WHERE id = @id", connection);
+        command.Parameters.AddWithValue("id", id);
+        var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return ReadRawFile(reader);
+    }
+
+    public async Task<RawFile?> TryGetByPath(string path, CancellationToken cancellationToken = default)
+    {
+        await using var connection = _databaseConnection.GetConnection();
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new NpgsqlCommand("SELECT " + _rawFileFields + " FROM raw_files WHERE path = @path LIMIT 1", connection);
+        command.Parameters.AddWithValue("path", path);
+        var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            return null;
+        }
+
+        return ReadRawFile(reader);
+    }
+
+    public async Task<RawFile> Create(RawFile rawFile, CancellationToken cancellationToken = default)
+    {
+        await using var connection = _databaseConnection.GetConnection();
+        await connection.OpenAsync(cancellationToken);
+
+        await using var command = new NpgsqlCommand("INSERT INTO raw_files (name, path) VALUES (@name, @path) RETURNING id", connection);
         command.Parameters.AddWithValue("name", rawFile.Name);
-        command.Parameters.AddWithValue("url", rawFile.Url);
-        await command.ExecuteNonQueryAsync();
+        command.Parameters.AddWithValue("path", rawFile.Path);
+        var reader = await command.ExecuteReaderAsync(cancellationToken);
+
+        if (!await reader.ReadAsync(cancellationToken))
+        {
+            throw new Exception("Failed to create raw file");
+        }
+
+        rawFile.Id = reader.GetInt32(0);
+        return rawFile;
     }
 }
