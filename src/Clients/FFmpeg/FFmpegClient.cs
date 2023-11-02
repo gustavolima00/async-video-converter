@@ -5,6 +5,7 @@ namespace Clients.FFmpeg;
 public interface IFFmpegClient
 {
     Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -48,6 +49,36 @@ public class FFmpegClient : IFFmpegClient
             if (videoFilePath is not null)
             {
                 File.Delete(videoFilePath);
+            }
+        }
+    }
+
+    public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
+    {
+        var conversion = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Convert(inputPath, outputPath);
+        await conversion.Start(cancellationToken);
+    }
+
+    public async Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default)
+    {
+        string? videoFilePath = null;
+        string? outputFilePath = null;
+        try
+        {
+            videoFilePath = await SaveStreamIntoTempFile(stream, fileExtension, cancellationToken);
+            outputFilePath = Path.ChangeExtension(videoFilePath, "mp4");
+            await ConvertToMp4(videoFilePath, outputFilePath, cancellationToken);
+            return File.OpenRead(outputFilePath);
+        }
+        finally
+        {
+            if (videoFilePath is not null)
+            {
+                File.Delete(videoFilePath);
+            }
+            if (outputFilePath is not null)
+            {
+                File.Delete(outputFilePath);
             }
         }
     }
