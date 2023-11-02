@@ -1,5 +1,5 @@
 
-using BlobStorageSdk;
+using Clients.BlobStorage;
 using MediaToolkit;
 using MediaToolkit.Model;
 using Repositories;
@@ -15,10 +15,10 @@ public interface IVideoManagerService
 public class VideoManagerService : IVideoManagerService
 {
 
-    private readonly IBlobStorageApi _blobStorageApi;
-    public VideoManagerService(IBlobStorageApi blobStorageApi)
+    private readonly IBlobStorageClient _blobStorageClient;
+    public VideoManagerService(IBlobStorageClient blobStorageClient)
     {
-        _blobStorageApi = blobStorageApi;
+        _blobStorageClient = blobStorageClient;
     }
 
     private async static Task<string> SaveStreamIntoTempFile(Stream stream, CancellationToken cancellationToken = default)
@@ -55,7 +55,7 @@ public class VideoManagerService : IVideoManagerService
 
     public async Task<Metadata> GetFileMetadata(string path, CancellationToken cancellationToken = default)
     {
-        var fileStream = await _blobStorageApi.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
+        var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         return await GetFileMetadata(fileStream, cancellationToken);
     }
 }

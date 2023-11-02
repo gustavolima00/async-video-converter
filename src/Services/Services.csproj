@@ -1,8 +1,8 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
-    <ProjectReference Include="..\BlobStorageSdk\BlobStorageSdk.csproj" />
     <ProjectReference Include="..\Repositories\Repositories.csproj" />
+    <ProjectReference Include="..\Clients\Clients.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

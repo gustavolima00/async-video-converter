@@ -1,6 +1,6 @@
-using BlobStorageSdk;
 using Services;
 using Repositories;
+using Clients;
 using Microsoft.AspNetCore.Http.Features;
 
 namespace Api;
@@ -16,7 +16,7 @@ public static class Register
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.RegisterBlobStorageSdkProject(configuration.GetProjectConfigurationSection(nameof(BlobStorageSdk)));
+        services.RegisterClients(configuration.GetProjectConfigurationSection(nameof(Clients)));
         services.RegisterRepositoriesProject(configuration.GetProjectConfigurationSection(nameof(Repositories)));
         services.RegisterServicesProject();
 

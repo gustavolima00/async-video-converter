@@ -1,5 +1,5 @@
-﻿using BlobStorageSdk;
-using BlobStorageSdk.Models;
+﻿using Clients.BlobStorage;
+using Clients.BlobStorage.Models;
 using MediaToolkit.Model;
 using Repositories;
 using Repositories.Models;
@@ -19,17 +19,17 @@ public interface IFileStorageService
 
 public class FileStorageService : IFileStorageService
 {
-    private readonly IBlobStorageApi _blobStorageApi;
+    private readonly IBlobStorageClient _blobStorageClient;
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
 
     public FileStorageService(
-        IBlobStorageApi blobStorageApi,
+        IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
         IVideoManagerService videoManagerService
     )
     {
-        _blobStorageApi = blobStorageApi;
+        _blobStorageClient = blobStorageClient;
         _rawFilesRepository = rawFilesRepository;
         _videoManagerService = videoManagerService;
     }
@@ -50,7 +50,7 @@ public class FileStorageService : IFileStorageService
 
     public async Task<FileDetails> SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
-        var fileMetadata = await _blobStorageApi.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
+        var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
         var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
         var metadata = await _videoManagerService.GetFileMetadata(fileMetadata.Path, cancellationToken);
         return new FileDetails
