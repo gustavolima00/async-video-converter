@@ -1,3 +1,6 @@
+using System.Text.Json;
+using Npgsql;
+
 namespace Repositories.Models;
 
 public class RawFile
@@ -11,6 +14,35 @@ public class RawFile
     public string GetFormat()
     {
         return Name.Split('.').Last();
+    }
+
+    public static RawFile BuildFromReader(NpgsqlDataReader reader)
+    {
+        int idOrdinal = reader.GetOrdinal("id");
+        int nameOrdinal = reader.GetOrdinal("name");
+        int pathOrdinal = reader.GetOrdinal("path");
+        int convertedPathOrdinal = reader.GetOrdinal("converted_path");
+        int metadataOrdinal = reader.GetOrdinal("metadata");
+        var rawFile = new RawFile();
+        if (idOrdinal >= 0)
+            rawFile.Id = reader.GetInt32(idOrdinal);
+
+        if (nameOrdinal >= 0)
+            rawFile.Name = reader.GetString(nameOrdinal);
+
+        if (pathOrdinal >= 0)
+            rawFile.Path = reader.GetString(pathOrdinal);
+
+        if (convertedPathOrdinal >= 0)
+            rawFile.ConvertedPath = reader.IsDBNull(convertedPathOrdinal)
+                            ? null
+                            : reader.GetString(convertedPathOrdinal);
+        if (metadataOrdinal >= 0)
+            rawFile.Metadata = reader.IsDBNull(metadataOrdinal)
+                       ? null
+                       : JsonSerializer.Deserialize<Metadata>(reader.GetString(metadataOrdinal));
+
+        return rawFile;
     }
 }
 

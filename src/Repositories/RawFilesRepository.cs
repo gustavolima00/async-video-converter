@@ -25,17 +25,6 @@ class RawFilesRepository : IRawFilesRepository
         _databaseConnection = databaseConnection;
     }
 
-    private static RawFile ReadRawFile(NpgsqlDataReader reader)
-    {
-        return new RawFile
-        {
-            Id = reader.GetInt32(0),
-            Name = reader.GetString(1),
-            Path = reader.GetString(2),
-            ConvertedPath = reader.IsDBNull(3) ? null : reader.GetString(3),
-            Metadata = reader.IsDBNull(4) ? null : JsonSerializer.Deserialize<Metadata>(reader.GetString(4))
-        };
-    }
 
     public async Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
@@ -51,7 +40,7 @@ class RawFilesRepository : IRawFilesRepository
             return null;
         }
 
-        return ReadRawFile(reader);
+        return RawFile.BuildFromReader(reader);
     }
 
     public async Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)
@@ -68,7 +57,7 @@ class RawFilesRepository : IRawFilesRepository
             return null;
         }
 
-        return ReadRawFile(reader);
+        return RawFile.BuildFromReader(reader);
     }
 
     public async Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default)
