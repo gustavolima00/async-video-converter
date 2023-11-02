@@ -6,6 +6,6 @@ public static class Register
 {
     public static void AddWorkers(this IServiceCollection services)
     {
-        services.AddHostedService<Worker>();
+        services.AddHostedService<FillFileMetadataWorker>();
     }
 }

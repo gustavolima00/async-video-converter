@@ -2,6 +2,7 @@
 using Clients.BlobStorage.Models;
 using Repositories;
 using Repositories.Models;
+using Services.Models;
 using Xabe.FFmpeg;
 
 namespace Services;
@@ -22,16 +23,19 @@ public class FileStorageService : IFileStorageService
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
+    private readonly IQueueService _queueService;
 
     public FileStorageService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
-        IVideoManagerService videoManagerService
+        IVideoManagerService videoManagerService,
+        IQueueService queueService
     )
     {
         _blobStorageClient = blobStorageClient;
         _rawFilesRepository = rawFilesRepository;
         _videoManagerService = videoManagerService;
+        _queueService = queueService;
     }
 
     private async Task<RawFile> GetOrCreateFile(ObjectMetadata fileMetadata, CancellationToken cancellationToken = default)
@@ -53,6 +57,12 @@ public class FileStorageService : IFileStorageService
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
         var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
         var metadata = await _videoManagerService.GetFileMetadata(fileMetadata.Path, cancellationToken);
+        _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
+        {
+            Id = rawFile.Id,
+            Path = rawFile.Path,
+        });
+
         return new FileDetails
         {
             RawFile = rawFile,
