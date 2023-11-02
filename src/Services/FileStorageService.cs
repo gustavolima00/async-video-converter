@@ -2,20 +2,13 @@
 using Clients.BlobStorage.Models;
 using Repositories;
 using Repositories.Models;
-using Services.Models;
 using Xabe.FFmpeg;
 
 namespace Services;
 
-public class FileDetails
-{
-    public RawFile? RawFile { get; set; }
-    public IMediaInfo? Metadata { get; set; }
-}
-
 public interface IRawFilesService
 {
-    Task<FileDetails> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default);
 }
@@ -54,30 +47,15 @@ public class RawFilesService : IRawFilesService
         return rawFile;
     }
 
-    public async Task<FileDetails> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
-        var metadata = await _videoManagerService.GetFileMetadata(fileMetadata.Path, cancellationToken);
-        _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
-        {
-            Id = rawFile.Id,
-        });
-
-        return new FileDetails
-        {
-            RawFile = rawFile,
-            Metadata = metadata,
-        };
+        return await GetOrCreateFile(fileMetadata, cancellationToken);
     }
 
     public async Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken);
-        if (rawFile is null)
-        {
-            throw new Exception($"Raw file with path {path} not found");
-        }
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new Exception($"Raw file with path {path} not found");
         return rawFile;
     }
 
