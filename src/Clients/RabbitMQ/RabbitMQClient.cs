@@ -1,15 +1,16 @@
 using System.Text;
 using System.Text.Json;
+using Clients.RabbitMQ.Models;
 using RabbitMQ.Client;
 
 namespace Clients.RabbitMQ;
 
 public interface IRabbitMQClient
 {
-    void SendMessageAsString(string queueName, string message);
-    void SendMessage<T>(string queueName, T message);
-    string? ReadMessageAsString(string queueName);
-    T? ReadMessage<T>(string queueName);
+    IConnection CreateConnection();
+    void SendMessage<T>(IConnection connection, string queueName, T message);
+    RabbitMQMessage<T>? ReadMessage<T>(IConnection connection, string queueName);
+    void DeleteMessage(IConnection connection, string queueName, string deliveryTag);
 }
 
 public class RabbitMQClient : IRabbitMQClient
@@ -20,13 +21,17 @@ public class RabbitMQClient : IRabbitMQClient
         _configuration = configuration;
     }
 
-    public void SendMessageAsString(string queueName, string message)
+    public IConnection CreateConnection()
     {
         var factory = new ConnectionFactory() { HostName = _configuration.Hostname };
-        using var connection = factory.CreateConnection();
+        return factory.CreateConnection();
+    }
+
+    public static void SendMessageAsString(IConnection connection, string queueName, string message)
+    {
         using var channel = connection.CreateModel();
         channel.QueueDeclare(queue: queueName,
-                             durable: false,
+                             durable: true,
                              exclusive: false,
                              autoDelete: false,
                              arguments: null);
@@ -39,41 +44,52 @@ public class RabbitMQClient : IRabbitMQClient
                              body: body);
     }
 
-    public void SendMessage<T>(string queueName, T message)
+    public void SendMessage<T>(IConnection connection, string queueName, T message)
     {
         var messageAsString = JsonSerializer.Serialize(message);
-        SendMessageAsString(queueName, messageAsString);
+        SendMessageAsString(connection, queueName, messageAsString);
 
     }
 
-    public string? ReadMessageAsString(string queueName)
+    public static RabbitMQMessage<string>? ReadMessageAsString(IConnection connection, string queueName)
     {
-        var factory = new ConnectionFactory() { HostName = _configuration.Hostname };
-        using var connection = factory.CreateConnection();
         using var channel = connection.CreateModel();
         channel.QueueDeclare(queue: queueName,
-                             durable: false,
+                             durable: true,
                              exclusive: false,
                              autoDelete: false,
                              arguments: null);
 
-        var data = channel.BasicGet(queueName, true);
+        var data = channel.BasicGet(queueName, false);
         if (data == null)
         {
             return null;
         }
         var message = Encoding.UTF8.GetString(data.Body.ToArray());
-        return message;
+        var deliveryTag = data.DeliveryTag;
+        return new RabbitMQMessage<string>(deliveryTag.ToString(), message);
     }
 
-    public T? ReadMessage<T>(string queueName)
+    public RabbitMQMessage<T>? ReadMessage<T>(IConnection connection, string queueName)
     {
-        var messageAsString = ReadMessageAsString(queueName);
+        var messageAsString = ReadMessageAsString(connection, queueName);
         if (messageAsString == null)
         {
-            return default;
+            return null;
         }
-        var message = JsonSerializer.Deserialize<T>(messageAsString);
-        return message;
+        var message = JsonSerializer.Deserialize<T>(messageAsString.Payload) ?? throw new Exception("Could not deserialize message");
+        return new RabbitMQMessage<T>(messageAsString.DeliveryTag, message);
+    }
+
+    public void DeleteMessage(IConnection connection, string queueName, string deliveryTag)
+    {
+        using var channel = connection.CreateModel();
+        channel.QueueDeclare(queue: queueName,
+                             durable: true,
+                             exclusive: false,
+                             autoDelete: false,
+                             arguments: null);
+
+        channel.BasicAck(deliveryTag: ulong.Parse(deliveryTag), multiple: false);
     }
 }
