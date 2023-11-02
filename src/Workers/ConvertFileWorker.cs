@@ -7,7 +7,7 @@ public class ConvertFileWorker : BaseQueueWorker<int>
 {
     IRawFilesService _fileStorageService;
     public ConvertFileWorker(
-        ILogger<BaseQueueWorker<int>> logger,
+        ILogger<ConvertFileWorker> logger,
         IQueueService queueService,
         IRawFilesService fileStorageService
     ) : base(logger, queueService)
