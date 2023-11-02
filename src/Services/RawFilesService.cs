@@ -7,6 +7,11 @@ using Xabe.FFmpeg;
 
 namespace Services;
 
+public class RawFileServiceException : Exception
+{
+    public RawFileServiceException(string message) : base(message) { }
+}
+
 public interface IRawFilesService
 {
     Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
@@ -34,24 +39,30 @@ public class RawFilesService : IRawFilesService
         _queueService = queueService;
     }
 
-    private async Task<RawFile> GetOrCreateFile(ObjectMetadata fileMetadata, CancellationToken cancellationToken = default)
+    private async Task<RawFile> CreateOrUpdateAsync(RawFile newFileMetadata, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(fileMetadata.Path, cancellationToken);
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(newFileMetadata.Path, cancellationToken);
         if (rawFile is null)
         {
             return await _rawFilesRepository.CreateAsync(new RawFile
             {
-                Name = fileMetadata.Name,
-                Path = fileMetadata.Path,
+                Name = newFileMetadata.Name,
+                Path = newFileMetadata.Path,
             }, cancellationToken);
         }
-        return rawFile;
+        await _rawFilesRepository.UpdateAsync(newFileMetadata, cancellationToken);
+        return newFileMetadata;
     }
 
     public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
+        var rawFile = await CreateOrUpdateAsync(
+            new RawFile
+            {
+                Name = fileMetadata.Name,
+                Path = fileMetadata.Path,
+            }, cancellationToken);
         _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
         {
             Id = rawFile.Id,
@@ -59,9 +70,10 @@ public class RawFilesService : IRawFilesService
         return rawFile;
     }
 
-    public async Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default)
+    public async Task<RawFile> GetRawFileAsync(string fileName, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new Exception($"Raw file with path {path} not found");
+        string path = $"raw_files/{fileName}";
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawFileServiceException($"Raw file with path {path} not found");
         return rawFile;
     }
 
@@ -98,7 +110,7 @@ public class RawFilesService : IRawFilesService
 
     public async Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new Exception($"Raw file with id {id} not found");
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadata(rawFile.Path, cancellationToken);
         rawFile.Metadata = BuildFileMetadata(metadata);
         await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
