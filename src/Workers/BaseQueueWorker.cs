@@ -59,7 +59,7 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
     {
         await Task.WhenAll(
             messages.Select(
-                (tuple) => 
+                (tuple) =>
                     LogAndProcessMessage(tuple.messageId, tuple.message, cancellationToken)
                     ).ToList());
     }
@@ -75,6 +75,7 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         catch (Exception e)
         {
             _logger.LogError($"Error processing message: {e.Message}, enquing message again");
+            await Task.Delay(DelayAfterError, cancellationToken);
             _queueService.SendMessage(QueueUrl, message);
         }
     }
