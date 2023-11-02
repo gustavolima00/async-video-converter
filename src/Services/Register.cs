@@ -8,6 +8,7 @@ public static class Register
         this IServiceCollection services)
     {
         services.AddSingleton<IFileStorageService, FileStorageService>();
+        services.AddSingleton<IVideoManagerService, VideoManagerService>();
         return services;
     }
 }

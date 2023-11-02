@@ -28,16 +28,10 @@ public class FileConversionController : ControllerBase
             return BadRequest("Nome do arquivo não fornecido.");
         }
 
-        try
-        {
-            using var stream = file.OpenReadStream();
-            var fileDetails = await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
-            return Ok(fileDetails);
-        }
-        catch (Exception ex)
-        {
-            return StatusCode(StatusCodes.Status500InternalServerError, $"Erro no servidor: {ex.Message}");
-        }
+
+        using var stream = file.OpenReadStream();
+        var fileDetails = await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
+        return Ok(fileDetails);
     }
 }
 
