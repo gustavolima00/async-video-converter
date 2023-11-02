@@ -10,7 +10,6 @@ public interface IRabbitMQClient
     IConnection CreateConnection();
     void SendMessage<T>(IConnection connection, string queueName, T message);
     RabbitMQMessage<T>? ReadMessage<T>(IConnection connection, string queueName);
-    void DeleteMessage(IConnection connection, string queueName, string deliveryTag);
 }
 
 public class RabbitMQClient : IRabbitMQClient
@@ -60,7 +59,7 @@ public class RabbitMQClient : IRabbitMQClient
                              autoDelete: false,
                              arguments: null);
 
-        var data = channel.BasicGet(queueName, false);
+        var data = channel.BasicGet(queueName, true);
         if (data == null)
         {
             return null;
@@ -79,17 +78,5 @@ public class RabbitMQClient : IRabbitMQClient
         }
         var message = JsonSerializer.Deserialize<T>(messageAsString.Payload) ?? throw new Exception("Could not deserialize message");
         return new RabbitMQMessage<T>(messageAsString.DeliveryTag, message);
-    }
-
-    public void DeleteMessage(IConnection connection, string queueName, string deliveryTag)
-    {
-        using var channel = connection.CreateModel();
-        channel.QueueDeclare(queue: queueName,
-                             durable: true,
-                             exclusive: false,
-                             autoDelete: false,
-                             arguments: null);
-
-        channel.BasicAck(deliveryTag: ulong.Parse(deliveryTag), multiple: false);
     }
 }

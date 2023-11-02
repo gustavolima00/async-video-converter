@@ -1,5 +1,4 @@
 using Clients.RabbitMQ;
-using RabbitMQ.Client;
 
 namespace Services;
 
@@ -9,7 +8,6 @@ public interface IQueueService
     (string messageId, T message)? ReadMessage<T>(string queueName);
 
     IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
-    void DeleteMessage(string queueName, string messageId);
 }
 
 public class QueueService : IQueueService
@@ -49,11 +47,5 @@ public class QueueService : IQueueService
             messages.Add((message.DeliveryTag, message.Payload));
         }
         return messages;
-    }
-
-    public void DeleteMessage(string queueName, string messageId)
-    {
-        using var connection = _rabbitMQClient.CreateConnection();
-        _rabbitMQClient.DeleteMessage(connection, queueName, messageId);
     }
 }

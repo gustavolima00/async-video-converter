@@ -66,12 +66,11 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
 
     private async Task LogAndProcessMessage(string messageId, TMessageType message, CancellationToken cancellationToken)
     {
-        _logger.LogInformation($"Processing message: {message}");
+        _logger.LogInformation($"Processing message: {messageId}");
         try
         {
             await ProcessMessage(message, cancellationToken);
-            _queueService.DeleteMessage(QueueUrl, messageId);
-            _logger.LogInformation("Message {@message} processed ", message);
+            _logger.LogInformation("Message {@message} processed ", messageId);
         }
         catch (Exception e)
         {
