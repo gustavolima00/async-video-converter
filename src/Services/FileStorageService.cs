@@ -13,19 +13,21 @@ public class FileDetails
     public IMediaInfo? Metadata { get; set; }
 }
 
-public interface IFileStorageService
+public interface IRawFilesService
 {
-    Task<FileDetails> SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<FileDetails> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default);
 }
 
-public class FileStorageService : IFileStorageService
+public class RawFilesService : IRawFilesService
 {
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
     private readonly IQueueService _queueService;
 
-    public FileStorageService(
+    public RawFilesService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
         IVideoManagerService videoManagerService,
@@ -52,7 +54,7 @@ public class FileStorageService : IFileStorageService
         return rawFile;
     }
 
-    public async Task<FileDetails> SaveFileToConvertAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<FileDetails> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
         var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
@@ -60,7 +62,6 @@ public class FileStorageService : IFileStorageService
         _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
         {
             Id = rawFile.Id,
-            Path = rawFile.Path,
         });
 
         return new FileDetails
@@ -68,5 +69,56 @@ public class FileStorageService : IFileStorageService
             RawFile = rawFile,
             Metadata = metadata,
         };
+    }
+
+    public async Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken);
+        if (rawFile is null)
+        {
+            throw new Exception($"Raw file with path {path} not found");
+        }
+        return rawFile;
+    }
+
+    private static Metadata BuildFileMetadata(IMediaInfo mediaInfo)
+    {
+        return new Metadata
+        {
+            Duration = mediaInfo.Duration,
+            Size = mediaInfo.Size,
+            AudioStreams = mediaInfo.AudioStreams.Select(
+                (stream) => new Repositories.Models.AudioStream
+                {
+                    Duration = stream.Duration,
+                    Bitrate = stream.Bitrate,
+                    SampleRate = stream.SampleRate,
+                    Channels = stream.Channels,
+                    Language = stream.Language,
+                    Title = stream.Title,
+                    Default = stream.Default,
+                    Forced = stream.Forced,
+                }
+            ),
+            SubtitleStreams = mediaInfo.SubtitleStreams.Select(
+                (stream) => new Repositories.Models.SubtitleStream
+                {
+                    Language = stream.Language,
+                    Title = stream.Title,
+                    Default = stream.Default,
+                    Forced = stream.Forced,
+                }
+            ),
+        };
+    }
+
+    public async Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new Exception($"Raw file with id {id} not found");
+        var metadata = await _videoManagerService.GetFileMetadata(rawFile.Path, cancellationToken);
+        rawFile.Metadata = BuildFileMetadata(metadata);
+        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+
+        return rawFile;
     }
 }

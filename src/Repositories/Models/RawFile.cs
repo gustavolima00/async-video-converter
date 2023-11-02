@@ -15,7 +15,7 @@ public class RawFile
 
 public class Metadata
 {
-    public string Duration { get; set; } = "";
+    public TimeSpan Duration { get; set; }
     public long Size { get; set; }
     public IEnumerable<AudioStream> AudioStreams { get; set; } = new List<AudioStream>();
     public IEnumerable<SubtitleStream> SubtitleStreams { get; set; } = new List<SubtitleStream>();
@@ -24,20 +24,20 @@ public class Metadata
 
 public class AudioStream
 {
-    public string Duration { get; set; } = "";
-    public int Bitrate { get; set; }
+    public TimeSpan Duration { get; set; }
+    public long Bitrate { get; set; }
     public int SampleRate { get; set; }
     public int Channels { get; set; }
     public string Language { get; set; } = "";
     public string? Title { get; set; }
-    public bool Default { get; set; }
-    public bool Forced { get; set; }
+    public int? Default { get; set; }
+    public int? Forced { get; set; }
 }
 
 public class SubtitleStream
 {
     public string Language { get; set; } = "";
     public string? Title { get; set; }
-    public bool Default { get; set; }
-    public bool Forced { get; set; }
+    public int? Default { get; set; }
+    public int? Forced { get; set; }
 }

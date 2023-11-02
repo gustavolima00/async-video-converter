@@ -10,6 +10,7 @@ public interface IRawFilesRepository
     Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
     Task<RawFile> CreateAsync(RawFile rawFile, CancellationToken cancellationToken = default);
+    Task UpdateAsync(RawFile rawFile, CancellationToken cancellationToken = default);
 }
 
 class RawFilesRepository : IRawFilesRepository

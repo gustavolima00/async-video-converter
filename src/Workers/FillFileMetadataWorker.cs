@@ -6,16 +6,19 @@ namespace Workers;
 
 public class FillFileMetadataWorker : BaseQueueWorker<FillFileMetadataMessage>
 {
-    private readonly ILogger<BaseQueueWorker<FillFileMetadataMessage>> _logger;
-    public FillFileMetadataWorker(ILogger<BaseQueueWorker<FillFileMetadataMessage>> logger, IQueueService queueService) : base(logger, queueService)
+    IRawFilesService _fileStorageService;
+    public FillFileMetadataWorker(
+        ILogger<BaseQueueWorker<FillFileMetadataMessage>> logger,
+        IQueueService queueService,
+        IRawFilesService fileStorageService
+    ) : base(logger, queueService)
     {
-        _logger = logger;
+        _fileStorageService = fileStorageService;
     }
     protected override string QueueUrl => "fill_file_metadata";
     protected override int DelayAfterNoMessage => 2;
-    protected override Task ProcessMessage(FillFileMetadataMessage fileMetadata, CancellationToken cancellationToken)
+    protected override async Task ProcessMessage(FillFileMetadataMessage fileMetadata, CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Processing message: {@result}", fileMetadata);
-        return Task.CompletedTask;
+        await _fileStorageService.FillFileMetadataAsync(fileMetadata.Id, cancellationToken);
     }
 }

@@ -8,9 +8,9 @@ namespace Api.Controllers;
 [ApiController]
 public class FileConversionController : ControllerBase
 {
-    private readonly IFileStorageService _fileStorageService;
+    private readonly IRawFilesService _fileStorageService;
 
-    public FileConversionController(IFileStorageService fileStorageService)
+    public FileConversionController(IRawFilesService fileStorageService)
     {
         _fileStorageService = fileStorageService;
     }
@@ -30,7 +30,7 @@ public class FileConversionController : ControllerBase
 
 
         using var stream = file.OpenReadStream();
-        var fileDetails = await _fileStorageService.SaveFileToConvertAsync(stream, fileName, cancellationToken);
+        var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, cancellationToken);
         return Ok(fileDetails);
     }
 }
