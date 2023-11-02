@@ -6,18 +6,11 @@ namespace Repositories;
 
 public static class Register
 {
-    private static PostgresConfiguration BuildPostgresConfiguration(IConfigurationSection configuration)
-    {
-        var config = new PostgresConfiguration();
-        config.ConnectionString = configuration.GetSection(nameof(config.ConnectionString)).Value ?? throw new Exception("ConnectionString is required");
-        return config;
-    }
-
     public static IServiceCollection RegisterRepositoriesProject(
-        this IServiceCollection services,
-        IConfigurationSection configuration)
+         this IServiceCollection services,
+         PostgresConfiguration postgresConfiguration)
     {
-        services.AddSingleton(BuildPostgresConfiguration(configuration.GetSection(nameof(PostgresConfiguration))));
+        services.AddSingleton(postgresConfiguration);
         services.AddSingleton<IDatabaseConnection, DatabaseConnection>();
         services.AddSingleton<IRawFilesRepository, RawFilesRepository>();
         return services;

@@ -3,18 +3,14 @@ using Repositories;
 using Clients;
 using Microsoft.AspNetCore.Http.Features;
 using Workers;
+using Repositories.Postgres;
 
 namespace Api;
 
 public static class Register
 {
-    public static IConfigurationSection GetProjectConfigurationSection(this IConfiguration configuration, string project)
-    {
-        return configuration.GetSection(project + "Configuration");
-    }
-
     private static TType GetConfiguration<TType>(
-    this IConfiguration configuration) where TType : class, new()
+     this IConfiguration configuration) where TType : class, new()
     {
         var typeConfig = new TType();
         configuration.Bind(typeConfig.GetType().Name, typeConfig);
@@ -26,7 +22,7 @@ public static class Register
         IConfiguration configuration)
     {
         services.RegisterClients(GetConfiguration<ClientsConfiguration>(configuration));
-        services.RegisterRepositoriesProject(configuration.GetProjectConfigurationSection(nameof(Repositories)));
+        services.RegisterRepositoriesProject(GetConfiguration<PostgresConfiguration>(configuration));
         services.RegisterServicesProject();
 
         services.AddWorkers();
