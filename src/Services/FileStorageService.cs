@@ -40,10 +40,10 @@ public class FileStorageService : IFileStorageService
 
     private async Task<RawFile> GetOrCreateFile(ObjectMetadata fileMetadata, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByPath(fileMetadata.Path, cancellationToken);
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(fileMetadata.Path, cancellationToken);
         if (rawFile is null)
         {
-            return await _rawFilesRepository.Create(new RawFile
+            return await _rawFilesRepository.CreateAsync(new RawFile
             {
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
