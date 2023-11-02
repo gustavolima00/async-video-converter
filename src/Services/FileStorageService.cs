@@ -1,15 +1,15 @@
 ﻿using Clients.BlobStorage;
 using Clients.BlobStorage.Models;
-using MediaToolkit.Model;
 using Repositories;
 using Repositories.Models;
+using Xabe.FFmpeg;
 
 namespace Services;
 
 public class FileDetails
 {
     public RawFile? RawFile { get; set; }
-    public Metadata? Metadata { get; set; }
+    public IMediaInfo? Metadata { get; set; }
 }
 
 public interface IFileStorageService

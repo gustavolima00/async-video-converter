@@ -1,14 +1,14 @@
 
 using Clients.BlobStorage;
 using Clients.FFmpeg;
-using MediaToolkit.Model;
+using Xabe.FFmpeg;
 
 namespace Services;
 
 public interface IVideoManagerService
 {
-    Task<Metadata> GetFileMetadata(Stream stream, CancellationToken cancellationToken = default);
-    Task<Metadata> GetFileMetadata(string path, CancellationToken cancellationToken = default);
+    Task<IMediaInfo> GetFileMetadata(Stream stream, CancellationToken cancellationToken = default);
+    Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default);
 }
 
 public class VideoManagerService : IVideoManagerService
@@ -33,13 +33,13 @@ public class VideoManagerService : IVideoManagerService
         return tempFilePath;
     }
 
-    public async Task<Metadata> GetFileMetadata(Stream stream, CancellationToken cancellationToken = default)
+    public async Task<IMediaInfo> GetFileMetadata(Stream stream, CancellationToken cancellationToken = default)
     {
         string? videoFilePath = null;
         try
         {
             videoFilePath = await SaveStreamIntoTempFile(stream, cancellationToken);
-            return _ffmpegClient.GetFileMetadata(videoFilePath);
+            return await _ffmpegClient.GetFileMetadata(videoFilePath, cancellationToken);
         }
         finally
         {
@@ -50,7 +50,7 @@ public class VideoManagerService : IVideoManagerService
         }
     }
 
-    public async Task<Metadata> GetFileMetadata(string path, CancellationToken cancellationToken = default)
+    public async Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         return await GetFileMetadata(fileStream, cancellationToken);

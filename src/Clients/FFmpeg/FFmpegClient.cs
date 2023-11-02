@@ -1,28 +1,25 @@
-using MediaToolkit;
-using MediaToolkit.Model;
+using Xabe.FFmpeg;
 
 namespace Clients.FFmpeg;
 
 public interface IFFmpegClient
 {
-    Metadata GetFileMetadata(string path);
+    Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
 {
-    private readonly string _ffmpegPath;
 
     public FFmpegClient(FFmpegClientConfiguration configuration)
     {
-        _ffmpegPath = configuration.FFmpegPath;
+        Xabe.FFmpeg.FFmpeg.SetExecutablesPath(
+            configuration.DirectoryWithFFmpegAndFFprobe,
+            configuration.FFmpegExeutableName,
+            configuration.FFprobeExeutableName);
     }
 
-    public Metadata GetFileMetadata(string path)
+    public async Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default)
     {
-        var inputFile = new MediaFile { Filename = path };
-
-        using var engine = new Engine(_ffmpegPath);
-        engine.GetMetadata(inputFile);
-        return inputFile.Metadata;
+        return await Xabe.FFmpeg.FFmpeg.GetMediaInfo(path, cancellationToken);
     }
 }
