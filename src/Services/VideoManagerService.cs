@@ -1,8 +1,7 @@
 
 using Clients.BlobStorage;
-using MediaToolkit;
+using Clients.FFmpeg;
 using MediaToolkit.Model;
-using Repositories;
 
 namespace Services;
 
@@ -16,9 +15,11 @@ public class VideoManagerService : IVideoManagerService
 {
 
     private readonly IBlobStorageClient _blobStorageClient;
-    public VideoManagerService(IBlobStorageClient blobStorageClient)
+    private readonly IFFmpegClient _ffmpegClient;
+    public VideoManagerService(IBlobStorageClient blobStorageClient, IFFmpegClient ffmpegClient)
     {
         _blobStorageClient = blobStorageClient;
+        _ffmpegClient = ffmpegClient;
     }
 
     private async static Task<string> SaveStreamIntoTempFile(Stream stream, CancellationToken cancellationToken = default)
@@ -38,11 +39,7 @@ public class VideoManagerService : IVideoManagerService
         try
         {
             videoFilePath = await SaveStreamIntoTempFile(stream, cancellationToken);
-            var inputFile = new MediaFile { Filename = videoFilePath };
-
-            using var engine = new Engine("/usr/bin/ffmpeg");
-            engine.GetMetadata(inputFile);
-            return inputFile.Metadata;
+            return _ffmpegClient.GetFileMetadata(videoFilePath);
         }
         finally
         {

@@ -1,6 +1,8 @@
 ﻿using Clients.BlobStorage;
+using Clients.FFmpeg;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+
 
 namespace Clients;
 
@@ -11,11 +13,19 @@ public static class Register
         IConfigurationSection configuration)
     {
         services.AddHttpClient();
-        var blobStorageClientConfiguration = configuration.GetSection(nameof(BlobStorageClientConfiguration));
         services.AddSingleton(
-            BlobStorageClientConfiguration.Build(blobStorageClientConfiguration)
+            BlobStorageClientConfiguration.Build(
+                configuration.GetSection(nameof(BlobStorageClientConfiguration))
+            )
         );
         services.AddSingleton<IBlobStorageClient, BlobStorageClient>();
+
+        services.AddSingleton(
+            FFmpegClientConfiguration.FromConfiguration(
+                configuration.GetSection(nameof(FFmpegClientConfiguration))
+            )
+        );
+        services.AddSingleton<IFFmpegClient, FFmpegClient>();
         return services;
     }
 }
