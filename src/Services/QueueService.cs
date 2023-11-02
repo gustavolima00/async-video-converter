@@ -15,19 +15,19 @@ public interface IQueueService
 public class QueueService : IQueueService
 {
     private readonly IRabbitMQClient _rabbitMQClient;
-    private readonly IConnection _rabbitMQConnection;
     public QueueService(IRabbitMQClient rabbitMQClient)
     {
         _rabbitMQClient = rabbitMQClient;
-        _rabbitMQConnection = _rabbitMQClient.CreateConnection();
     }
     public void SendMessage<T>(string queueName, T message)
     {
-        _rabbitMQClient.SendMessage(_rabbitMQConnection, queueName, message);
+        using var connection = _rabbitMQClient.CreateConnection();
+        _rabbitMQClient.SendMessage(connection, queueName, message);
     }
     public (string messageId, T message)? ReadMessage<T>(string queueName)
     {
-        var message = _rabbitMQClient.ReadMessage<T>(_rabbitMQConnection, queueName);
+        using var connection = _rabbitMQClient.CreateConnection();
+        var message = _rabbitMQClient.ReadMessage<T>(connection, queueName);
         if (message is null)
         {
             return null;
@@ -37,21 +37,23 @@ public class QueueService : IQueueService
 
     public IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)
     {
+        using var connection = _rabbitMQClient.CreateConnection();
         var messages = new List<(string messageId, T message)>();
         for (int i = 0; i < maxMessages; i++)
         {
-            var message = ReadMessage<T>(queueName);
+            var message = _rabbitMQClient.ReadMessage<T>(connection, queueName);
             if (message is null)
             {
                 break;
             }
-            messages.Add((message.Value.messageId, message.Value.message));
+            messages.Add((message.DeliveryTag, message.Payload));
         }
         return messages;
     }
 
     public void DeleteMessage(string queueName, string messageId)
     {
-        _rabbitMQClient.DeleteMessage(_rabbitMQConnection, queueName, messageId);
+        using var connection = _rabbitMQClient.CreateConnection();
+        _rabbitMQClient.DeleteMessage(connection, queueName, messageId);
     }
 }
