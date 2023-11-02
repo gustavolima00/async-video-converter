@@ -1,8 +1,6 @@
 ﻿using Clients.BlobStorage;
-using Clients.BlobStorage.Models;
 using Repositories;
 using Repositories.Models;
-using Services.Models;
 using Xabe.FFmpeg;
 
 namespace Services;
@@ -51,6 +49,7 @@ public class RawFilesService : IRawFilesService
             }, cancellationToken);
         }
         await _rawFilesRepository.UpdateAsync(newFileMetadata, cancellationToken);
+        newFileMetadata.Id = rawFile.Id;
         return newFileMetadata;
     }
 
@@ -63,10 +62,7 @@ public class RawFilesService : IRawFilesService
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
             }, cancellationToken);
-        _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
-        {
-            Id = rawFile.Id,
-        });
+        _queueService.EnqueueFileToFillMetadata(rawFile.Id);
         return rawFile;
     }
 

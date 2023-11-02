@@ -76,7 +76,7 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         {
             _logger.LogError($"Error processing message: {e.Message}, enquing message again");
             await Task.Delay(DelayAfterError, cancellationToken);
-            _queueService.SendMessage(QueueUrl, message);
+            _queueService.EnqueueMessage(QueueUrl, message);
         }
     }
     protected abstract Task ProcessMessage(TMessageType message, CancellationToken cancellationToken);

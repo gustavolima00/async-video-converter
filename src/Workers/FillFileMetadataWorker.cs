@@ -1,14 +1,13 @@
 using Microsoft.Extensions.Logging;
 using Services;
-using Services.Models;
 
 namespace Workers;
 
-public class FillFileMetadataWorker : BaseQueueWorker<FillFileMetadataMessage>
+public class FillFileMetadataWorker : BaseQueueWorker<int>
 {
     IRawFilesService _fileStorageService;
     public FillFileMetadataWorker(
-        ILogger<BaseQueueWorker<FillFileMetadataMessage>> logger,
+        ILogger<BaseQueueWorker<int>> logger,
         IQueueService queueService,
         IRawFilesService fileStorageService
     ) : base(logger, queueService)
@@ -17,8 +16,8 @@ public class FillFileMetadataWorker : BaseQueueWorker<FillFileMetadataMessage>
     }
     protected override string QueueUrl => "fill_file_metadata";
     protected override int DelayAfterNoMessage => 2;
-    protected override async Task ProcessMessage(FillFileMetadataMessage fileMetadata, CancellationToken cancellationToken)
+    protected override async Task ProcessMessage(int id, CancellationToken cancellationToken)
     {
-        await _fileStorageService.FillFileMetadataAsync(fileMetadata.Id, cancellationToken);
+        await _fileStorageService.FillFileMetadataAsync(id, cancellationToken);
     }
 }
