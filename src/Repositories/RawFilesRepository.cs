@@ -100,7 +100,7 @@ class RawFilesRepository : IRawFilesRepository
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new NpgsqlCommand("UPDATE raw_files SET name = @name, path = @path, metadata = @metadata WHERE id = @id", connection);
+        await using var command = new NpgsqlCommand("UPDATE raw_files SET name = @name, path = @path, converted_path = @converted_path, metadata = @metadata WHERE id = @id", connection);
         command.Parameters.AddWithValue("id", rawFile.Id);
         command.Parameters.AddWithValue("name", rawFile.Name);
         command.Parameters.AddWithValue("path", rawFile.Path);
@@ -109,6 +109,15 @@ class RawFilesRepository : IRawFilesRepository
             Value = JsonSerializer.Serialize(rawFile.Metadata)
         };
         command.Parameters.Add(metadataParam);
+
+        if (rawFile.ConvertedPath is null)
+        {
+            command.Parameters.AddWithValue("converted_path", DBNull.Value);
+        }
+        else
+        {
+            command.Parameters.AddWithValue("converted_path", rawFile.ConvertedPath);
+        }
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }

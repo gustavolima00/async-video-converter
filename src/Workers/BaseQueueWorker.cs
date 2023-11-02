@@ -24,8 +24,8 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
     }
 
     protected abstract string QueueUrl { get; }
-    protected virtual int DelayAfterNoMessage => 60000;
-    protected virtual int DelayAfterError => 60000;
+    protected virtual int DelayAfterNoMessage => 1000;
+    protected virtual int DelayAfterError => 1000;
     protected virtual int MaxParallel => 4;
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
@@ -74,9 +74,8 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         }
         catch (Exception e)
         {
-            _logger.LogError($"Error processing message: {e.Message}, enquing message again");
-            await Task.Delay(DelayAfterError, cancellationToken);
-            _queueService.EnqueueMessage(QueueUrl, message);
+            _logger.LogError($"Error processing message: {e.Message}");
+            // _queueService.EnqueueMessage(QueueUrl, message);
         }
     }
     protected abstract Task ProcessMessage(TMessageType message, CancellationToken cancellationToken);

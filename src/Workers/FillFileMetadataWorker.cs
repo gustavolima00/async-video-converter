@@ -15,6 +15,7 @@ public class FillFileMetadataWorker : BaseQueueWorker<int>
         _fileStorageService = fileStorageService;
     }
     protected override string QueueUrl => "fill_file_metadata";
+
     protected override async Task ProcessMessage(int id, CancellationToken cancellationToken)
     {
         await _fileStorageService.FillFileMetadataAsync(id, cancellationToken);

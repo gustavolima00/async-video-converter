@@ -35,7 +35,7 @@ public class VideoManagerService : IVideoManagerService
     {
         string rawFilePath = $"raw_files/{fileName}";
         string rawFileExtension = Path.GetExtension(rawFilePath);
-        string mp4FilePath = $"mp4_files/{Path.GetFileNameWithoutExtension(rawFilePath)}.mp4";
+        string mp4FileName = $"{Path.GetFileNameWithoutExtension(rawFilePath)}.mp4";
         var fileStream = await _blobStorageClient.GetFileAsync(rawFilePath, cancellationToken) ?? throw new Exception($"File not found: {rawFilePath}");
         Stream mp4Stream;
         if (rawFileExtension == ".mp4")
@@ -46,6 +46,6 @@ public class VideoManagerService : IVideoManagerService
         {
             mp4Stream = await _ffmpegClient.ConvertToMp4(fileStream, rawFileExtension, cancellationToken);
         }
-        return await _blobStorageClient.UploadFileAsync(mp4Stream, mp4FilePath, "mp4_files", cancellationToken);
+        return await _blobStorageClient.UploadFileAsync(mp4Stream, mp4FileName, "mp4_files", cancellationToken);
     }
 }
