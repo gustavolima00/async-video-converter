@@ -9,6 +9,7 @@ public static class Register
     {
         services.AddSingleton<IFileStorageService, FileStorageService>();
         services.AddSingleton<IVideoManagerService, VideoManagerService>();
+        services.AddSingleton<IQueueService, QueueService>();
         return services;
     }
 }
