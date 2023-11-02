@@ -15,6 +15,7 @@ public interface IRawFilesService
     Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default);
+    Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default);
 }
 
 public class RawFilesService : IRawFilesService
@@ -63,6 +64,7 @@ public class RawFilesService : IRawFilesService
                 Path = fileMetadata.Path,
             }, cancellationToken);
         _queueService.EnqueueFileToFillMetadata(rawFile.Id);
+        _queueService.EnqueueFileToConvert(rawFile.Id);
         return rawFile;
     }
 

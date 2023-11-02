@@ -5,6 +5,7 @@ namespace Services;
 public interface IQueueService
 {
     void EnqueueFileToFillMetadata(int id);
+    void EnqueueFileToConvert(int id);
 
     void EnqueueMessage<T>(string queueName, T message);
     IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
@@ -26,6 +27,11 @@ public class QueueService : IQueueService
     public void EnqueueFileToFillMetadata(int id)
     {
         EnqueueMessage("fill_metadata", id);
+    }
+
+    public void EnqueueFileToConvert(int id)
+    {
+        EnqueueMessage("convert", id);
     }
 
     public IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)

@@ -3,10 +3,10 @@ using Services;
 
 namespace Workers;
 
-public class FillFileMetadataWorker : BaseQueueWorker<int>
+public class ConvertFileWorker : BaseQueueWorker<int>
 {
     IRawFilesService _fileStorageService;
-    public FillFileMetadataWorker(
+    public ConvertFileWorker(
         ILogger<BaseQueueWorker<int>> logger,
         IQueueService queueService,
         IRawFilesService fileStorageService
@@ -14,9 +14,9 @@ public class FillFileMetadataWorker : BaseQueueWorker<int>
     {
         _fileStorageService = fileStorageService;
     }
-    protected override string QueueUrl => "fill_file_metadata";
+    protected override string QueueUrl => "convert";
     protected override async Task ProcessMessage(int id, CancellationToken cancellationToken)
     {
-        await _fileStorageService.FillFileMetadataAsync(id, cancellationToken);
+        await _fileStorageService.ConvertFileToMp4(id, cancellationToken);
     }
 }
