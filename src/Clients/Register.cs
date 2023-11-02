@@ -1,5 +1,6 @@
 ﻿using Clients.BlobStorage;
 using Clients.FFmpeg;
+using Clients.RabbitMQ;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -26,6 +27,13 @@ public static class Register
             )
         );
         services.AddSingleton<IFFmpegClient, FFmpegClient>();
+
+        services.AddSingleton(
+            RabbitMQClientConfiguration.FromConfiguration(
+                configuration.GetSection(nameof(RabbitMQClientConfiguration))
+            )
+        );
+        services.AddSingleton<IRabbitMQClient, RabbitMQClient>();
         return services;
     }
 }

@@ -10,5 +10,6 @@
     <PackageReference Include="Microsoft.Extensions.Configuration" Version="7.0.0" />
     <PackageReference Include="Microsoft.Extensions.Http" Version="8.0.0-rc.2.23479.6" />
     <PackageReference Include="Xabe.FFmpeg" Version="5.2.6" />
+    <PackageReference Include="RabbitMQ.Client" Version="6.6.0" />
   </ItemGroup>
 </Project>
