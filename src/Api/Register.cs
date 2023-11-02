@@ -2,6 +2,7 @@ using Services;
 using Repositories;
 using Clients;
 using Microsoft.AspNetCore.Http.Features;
+using Workers;
 
 namespace Api;
 
@@ -12,13 +13,23 @@ public static class Register
         return configuration.GetSection(project + "Configuration");
     }
 
+    private static TType GetConfiguration<TType>(
+    this IConfiguration configuration) where TType : class, new()
+    {
+        var typeConfig = new TType();
+        configuration.Bind(typeConfig.GetType().Name, typeConfig);
+        return typeConfig;
+    }
+
     public static IServiceCollection RegisterServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.RegisterClients(configuration.GetProjectConfigurationSection(nameof(Clients)));
+        services.RegisterClients(GetConfiguration<ClientsConfiguration>(configuration));
         services.RegisterRepositoriesProject(configuration.GetProjectConfigurationSection(nameof(Repositories)));
         services.RegisterServicesProject();
+
+        services.AddWorkers();
 
         services.AddControllers();
         services.AddEndpointsApiExplorer();
