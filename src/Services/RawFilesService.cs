@@ -2,6 +2,7 @@
 using Clients.BlobStorage.Models;
 using Repositories;
 using Repositories.Models;
+using Services.Models;
 using Xabe.FFmpeg;
 
 namespace Services;
@@ -50,7 +51,12 @@ public class RawFilesService : IRawFilesService
     public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        return await GetOrCreateFile(fileMetadata, cancellationToken);
+        var rawFile = await GetOrCreateFile(fileMetadata, cancellationToken);
+        _queueService.SendMessage("fill_file_metadata", new FillFileMetadataMessage
+        {
+            Id = rawFile.Id,
+        });
+        return rawFile;
     }
 
     public async Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default)

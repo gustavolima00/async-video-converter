@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Npgsql;
+using NpgsqlTypes;
 using Repositories.Models;
 using Repositories.Postgres;
 
@@ -76,7 +77,12 @@ class RawFilesRepository : IRawFilesRepository
         await using var command = new NpgsqlCommand("INSERT INTO raw_files (name, path, metadata) VALUES (@name, @path, @metadata) RETURNING id", connection);
         command.Parameters.AddWithValue("name", rawFile.Name);
         command.Parameters.AddWithValue("path", rawFile.Path);
-        command.Parameters.AddWithValue("metadata", JsonSerializer.Serialize(rawFile.Metadata));
+        var metadataParam = new NpgsqlParameter("metadata", NpgsqlDbType.Jsonb)
+        {
+            Value = JsonSerializer.Serialize(rawFile.Metadata)
+        };
+        command.Parameters.Add(metadataParam);
+
         var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         if (!await reader.ReadAsync(cancellationToken))
@@ -97,7 +103,11 @@ class RawFilesRepository : IRawFilesRepository
         command.Parameters.AddWithValue("id", rawFile.Id);
         command.Parameters.AddWithValue("name", rawFile.Name);
         command.Parameters.AddWithValue("path", rawFile.Path);
-        command.Parameters.AddWithValue("metadata", JsonSerializer.Serialize(rawFile.Metadata));
+        var metadataParam = new NpgsqlParameter("metadata", NpgsqlDbType.Jsonb)
+        {
+            Value = JsonSerializer.Serialize(rawFile.Metadata)
+        };
+        command.Parameters.Add(metadataParam);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }
