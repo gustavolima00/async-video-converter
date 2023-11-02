@@ -1,4 +1,5 @@
 using Clients.RabbitMQ;
+using Services.Configuration;
 
 namespace Services;
 
@@ -14,9 +15,12 @@ public interface IQueueService
 public class QueueService : IQueueService
 {
     private readonly IRabbitMQClient _rabbitMQClient;
-    public QueueService(IRabbitMQClient rabbitMQClient)
+    private readonly QueuesConfiguration _queuesConfiguration;
+
+    public QueueService(IRabbitMQClient rabbitMQClient, QueuesConfiguration queuesConfiguration)
     {
         _rabbitMQClient = rabbitMQClient;
+        _queuesConfiguration = queuesConfiguration;
     }
     public void EnqueueMessage<T>(string queueName, T message)
     {
@@ -26,12 +30,12 @@ public class QueueService : IQueueService
 
     public void EnqueueFileToFillMetadata(int id)
     {
-        EnqueueMessage("fill_metadata", id);
+        EnqueueMessage(_queuesConfiguration.FillMetadataQueueName, id);
     }
 
     public void EnqueueFileToConvert(int id)
     {
-        EnqueueMessage("convert", id);
+        EnqueueMessage(_queuesConfiguration.ConvertQueueName, id);
     }
 
     public IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)

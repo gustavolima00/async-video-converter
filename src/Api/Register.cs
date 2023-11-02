@@ -4,6 +4,7 @@ using Clients;
 using Microsoft.AspNetCore.Http.Features;
 using Workers;
 using Repositories.Postgres;
+using Services.Configuration;
 
 namespace Api;
 
@@ -23,7 +24,7 @@ public static class Register
     {
         services.RegisterClients(GetConfiguration<ClientsConfiguration>(configuration));
         services.RegisterRepositoriesProject(GetConfiguration<PostgresConfiguration>(configuration));
-        services.RegisterServicesProject();
+        services.RegisterServicesProject(GetConfiguration<QueuesConfiguration>(configuration));
 
         services.AddWorkers();
 
