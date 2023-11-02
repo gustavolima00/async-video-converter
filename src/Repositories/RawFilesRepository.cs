@@ -83,16 +83,16 @@ class RawFilesRepository : IRawFilesRepository
             deleteCommand.Parameters.AddWithValue("path", path);
             await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var insertCommand = new NpgsqlCommand("INSERT INTO raw_files (name, path) VALUES (@name, @path) RETURNING *", connection);
+            await using var insertCommand = new NpgsqlCommand("INSERT INTO raw_files (name, path) VALUES (@name, @path) RETURNING id", connection);
             insertCommand.Parameters.AddWithValue("name", name);
             insertCommand.Parameters.AddWithValue("path", path);
             await using var reader = await insertCommand.ExecuteReaderAsync(cancellationToken);
-
-            var rawFile = ReadRawFile(reader);
+            await reader.ReadAsync(cancellationToken);
+            var id = reader.GetInt32(0);
             await reader.CloseAsync();
 
             await transaction.CommitAsync(cancellationToken);
-            return rawFile;
+            return new RawFile { Id = id, Name = name, Path = path };
         }
         catch
         {
