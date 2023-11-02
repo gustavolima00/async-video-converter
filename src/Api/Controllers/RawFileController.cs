@@ -4,18 +4,18 @@ using Services;
 namespace Api.Controllers;
 
 
-[Route("file-conversion")]
+[Route("raw-file")]
 [ApiController]
-public class FileConversionController : ControllerBase
+public class RawFileController : ControllerBase
 {
     private readonly IRawFilesService _fileStorageService;
 
-    public FileConversionController(IRawFilesService fileStorageService)
+    public RawFileController(IRawFilesService fileStorageService)
     {
         _fileStorageService = fileStorageService;
     }
 
-    [HttpPost("send-file")]
+    [HttpPost("send")]
     public async Task<IActionResult> SendFileToConversion(IFormFile file, [FromQuery] string fileName, CancellationToken cancellationToken)
     {
         if (file == null || file.Length == 0)
@@ -33,5 +33,18 @@ public class FileConversionController : ControllerBase
         var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, cancellationToken);
         return Ok(fileDetails);
     }
+
+    [HttpGet("get")]
+    public async Task<IActionResult> GetFile([FromQuery] string path, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(path))
+        {
+            return BadRequest("Caminho do arquivo não fornecido.");
+        }
+
+        var fileDetails = await _fileStorageService.GetRawFileAsync(path, cancellationToken);
+        return Ok(fileDetails);
+    }
+
 }
 
