@@ -31,7 +31,8 @@ class RawFilesRepository : IRawFilesRepository
             Id = reader.GetInt32(0),
             Name = reader.GetString(1),
             Path = reader.GetString(2),
-            Metadata = JsonSerializer.Deserialize<Metadata>(reader.GetString(3))
+            ConvertedPath = reader.IsDBNull(4) ? null : reader.GetString(4),
+            Metadata = JsonSerializer.Deserialize<Metadata>(reader.GetString(4))
         };
     }
 

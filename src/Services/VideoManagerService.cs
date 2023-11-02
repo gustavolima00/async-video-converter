@@ -1,5 +1,6 @@
 
 using Clients.BlobStorage;
+using Clients.BlobStorage.Models;
 using Clients.FFmpeg;
 using Xabe.FFmpeg;
 
@@ -8,6 +9,7 @@ namespace Services;
 public interface IVideoManagerService
 {
     Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default);
+    Task<ObjectMetadata> ConvertRawFileToMp4(string fileName, CancellationToken cancellationToken = default);
 }
 
 public class VideoManagerService : IVideoManagerService
@@ -27,5 +29,23 @@ public class VideoManagerService : IVideoManagerService
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var extension = Path.GetExtension(path);
         return await _ffmpegClient.GetFileMetadata(fileStream, extension, cancellationToken);
+    }
+
+    public async Task<ObjectMetadata> ConvertRawFileToMp4(string fileName, CancellationToken cancellationToken = default)
+    {
+        string rawFilePath = $"raw_files/{fileName}";
+        string rawFileExtension = Path.GetExtension(rawFilePath);
+        string mp4FilePath = $"mp4_files/{Path.GetFileNameWithoutExtension(rawFilePath)}.mp4";
+        var fileStream = await _blobStorageClient.GetFileAsync(rawFilePath, cancellationToken) ?? throw new Exception($"File not found: {rawFilePath}");
+        Stream mp4Stream;
+        if (rawFileExtension == ".mp4")
+        {
+            mp4Stream = fileStream;
+        }
+        else
+        {
+            mp4Stream = await _ffmpegClient.ConvertToMp4(fileStream, rawFileExtension, cancellationToken);
+        }
+        return await _blobStorageClient.UploadFileAsync(mp4Stream, mp4FilePath, "mp4_files", cancellationToken);
     }
 }

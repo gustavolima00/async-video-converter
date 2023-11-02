@@ -113,4 +113,12 @@ public class RawFilesService : IRawFilesService
 
         return rawFile;
     }
+
+    public async Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        var mp4FileMetadata = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
+        rawFile.ConvertedPath = mp4FileMetadata.Path;
+        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+    }
 }

@@ -5,6 +5,7 @@ public class RawFile
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
+    public string? ConvertedPath { get; set; }
     public Metadata? Metadata { get; set; }
 
     public string GetFormat()
