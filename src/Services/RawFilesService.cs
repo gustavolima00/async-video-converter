@@ -38,31 +38,10 @@ public class RawFilesService : IRawFilesService
         _queueService = queueService;
     }
 
-    private async Task<RawFile> CreateOrUpdateAsync(RawFile newFileMetadata, CancellationToken cancellationToken = default)
-    {
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(newFileMetadata.Path, cancellationToken);
-        if (rawFile is null)
-        {
-            return await _rawFilesRepository.CreateAsync(new RawFile
-            {
-                Name = newFileMetadata.Name,
-                Path = newFileMetadata.Path,
-            }, cancellationToken);
-        }
-        await _rawFilesRepository.UpdateAsync(newFileMetadata, cancellationToken);
-        newFileMetadata.Id = rawFile.Id;
-        return newFileMetadata;
-    }
-
     public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        var rawFile = await CreateOrUpdateAsync(
-            new RawFile
-            {
-                Name = fileMetadata.Name,
-                Path = fileMetadata.Path,
-            }, cancellationToken);
+        var rawFile = await _rawFilesRepository.CreateOrReplaceByPathAsync(fileMetadata.Name, fileMetadata.Path, cancellationToken);
         _queueService.EnqueueFileToFillMetadata(rawFile.Id);
         _queueService.EnqueueFileToConvert(rawFile.Id);
         return rawFile;
@@ -110,8 +89,7 @@ public class RawFilesService : IRawFilesService
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadata(rawFile.Path, cancellationToken);
-        rawFile.Metadata = BuildFileMetadata(metadata);
-        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+        await _rawFilesRepository.UpdateMetadataAsync(id, BuildFileMetadata(metadata), cancellationToken);
 
         return rawFile;
     }
@@ -121,6 +99,6 @@ public class RawFilesService : IRawFilesService
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
         var mp4FileMetadata = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
         rawFile.ConvertedPath = mp4FileMetadata.Path;
-        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+        await _rawFilesRepository.UpdateConvertedPathAsync(id, mp4FileMetadata.Path, cancellationToken);
     }
 }
