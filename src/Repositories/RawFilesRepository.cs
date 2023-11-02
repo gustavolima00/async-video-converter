@@ -60,6 +60,7 @@ class RawFilesRepository : IRawFilesRepository
 
         await using var command = new NpgsqlCommand("SELECT * FROM raw_files WHERE path = @path LIMIT 1", connection);
         command.Parameters.AddWithValue("path", path);
+
         var reader = await command.ExecuteReaderAsync(cancellationToken);
 
         if (!await reader.ReadAsync(cancellationToken))
@@ -75,14 +76,11 @@ class RawFilesRepository : IRawFilesRepository
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new NpgsqlCommand("INSERT INTO raw_files (name, path, metadata) VALUES (@name, @path, @metadata) RETURNING id", connection);
-        command.Parameters.AddWithValue("name", rawFile.Name);
-        command.Parameters.AddWithValue("path", rawFile.Path);
-        var metadataParam = new NpgsqlParameter("metadata", NpgsqlDbType.Jsonb)
-        {
-            Value = JsonSerializer.Serialize(rawFile.Metadata)
-        };
-        command.Parameters.Add(metadataParam);
+        await using var command = new NpgsqlCommand("INSERT INTO raw_files (name, path, converted_path, metadata) VALUES (@name, @path, @converted_path, @metadata) RETURNING id", connection);
+        command.AddParameter("name", rawFile.Name);
+        command.AddParameter("path", rawFile.Path);
+        command.AddParameter("metadata", JsonSerializer.Serialize(rawFile.Metadata), NpgsqlDbType.Jsonb);
+        command.AddParameter("converted_path", rawFile.ConvertedPath);
 
         var reader = await command.ExecuteReaderAsync(cancellationToken);
 
@@ -101,23 +99,11 @@ class RawFilesRepository : IRawFilesRepository
         await connection.OpenAsync(cancellationToken);
 
         await using var command = new NpgsqlCommand("UPDATE raw_files SET name = @name, path = @path, converted_path = @converted_path, metadata = @metadata WHERE id = @id", connection);
-        command.Parameters.AddWithValue("id", rawFile.Id);
-        command.Parameters.AddWithValue("name", rawFile.Name);
-        command.Parameters.AddWithValue("path", rawFile.Path);
-        var metadataParam = new NpgsqlParameter("metadata", NpgsqlDbType.Jsonb)
-        {
-            Value = JsonSerializer.Serialize(rawFile.Metadata)
-        };
-        command.Parameters.Add(metadataParam);
-
-        if (rawFile.ConvertedPath is null)
-        {
-            command.Parameters.AddWithValue("converted_path", DBNull.Value);
-        }
-        else
-        {
-            command.Parameters.AddWithValue("converted_path", rawFile.ConvertedPath);
-        }
+        command.AddParameter("id", rawFile.Id);
+        command.AddParameter("name", rawFile.Name);
+        command.AddParameter("path", rawFile.Path);
+        command.AddParameter("metadata", JsonSerializer.Serialize(rawFile.Metadata), NpgsqlDbType.Jsonb);
+        command.AddParameter("converted_path", rawFile.ConvertedPath);
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 }
