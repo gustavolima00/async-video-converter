@@ -8,6 +8,7 @@ public class WebVideo
 {
     public int Id { get; set; }
     public string Name { get; set; } = "";
+    public string Path { get; set; } = "";
     public string Link { get; set; } = "";
 
     public int RawFileId { get; set; }
@@ -28,6 +29,7 @@ public class WebVideo
         yield return "web_videos.link as web_videos_link";
         yield return "web_videos.raw_file_id as web_videos_raw_file_id";
         yield return "web_videos.metadata as web_videos_metadata";
+        yield return "web_videos.path as web_videos_path";
     }
 
     private static WebVideo? BuildWithoutSubtitlesFromReader(NpgsqlDataReader reader)
@@ -42,6 +44,7 @@ public class WebVideo
         int linkOrdinal = reader.GetOrdinal("web_videos_link");
         int rawFileIdOrdinal = reader.GetOrdinal("web_videos_raw_file_id");
         int metadataOrdinal = reader.GetOrdinal("web_videos_metadata");
+        int pathOrdinal = reader.GetOrdinal("web_videos_path");
         var webVideo = new WebVideo();
         if (idOrdinal >= 0)
             webVideo.Id = reader.GetInt32(idOrdinal);
@@ -59,6 +62,8 @@ public class WebVideo
             webVideo.Metadata = reader.IsDBNull(metadataOrdinal)
                 ? null
                 : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
+        if(pathOrdinal >= 0)
+            webVideo.Path = reader.GetString(pathOrdinal);
 
         return webVideo;
     }
@@ -132,6 +137,7 @@ public class WebVideoSubtitle
 {
     public int Id { get; set; }
     public int WebVideoId { get; set; }
+    public string Path { get; set; } = "";
     public string Language { get; set; } = "";
     public string Link { get; set; } = "";
     public MediaMetadata? Metadata { get; set; }
@@ -143,6 +149,7 @@ public class WebVideoSubtitle
         yield return "web_video_subtitles.language as web_video_subtitles_language";
         yield return "web_video_subtitles.link as web_video_subtitles_link";
         yield return "web_video_subtitles.metadata as web_video_subtitles_metadata";
+        yield return "web_video_subtitles.path as web_video_subtitles_path";
     }
 
     public static WebVideoSubtitle? BuildFromReader(NpgsqlDataReader reader)
@@ -157,6 +164,7 @@ public class WebVideoSubtitle
         int languageOrdinal = reader.GetOrdinal("web_video_subtitles_language");
         int linkOrdinal = reader.GetOrdinal("web_video_subtitles_link");
         int metadataOrdinal = reader.GetOrdinal("web_video_subtitles_metadata");
+        int pathOrdinal = reader.GetOrdinal("web_video_subtitles_path");
         var webVideoSubtitle = new WebVideoSubtitle();
         if (idOrdinal >= 0)
             webVideoSubtitle.Id = reader.GetInt32(idOrdinal);
@@ -174,6 +182,9 @@ public class WebVideoSubtitle
             webVideoSubtitle.Metadata = reader.IsDBNull(metadataOrdinal)
                 ? null
                 : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
+        if(pathOrdinal >= 0)
+            webVideoSubtitle.Path = reader.GetString(pathOrdinal);
+
 
         return webVideoSubtitle;
     }

@@ -9,6 +9,7 @@ create table raw_files(
 create table web_videos(
     id serial primary key,
     name varchar(255) not null,
+    path varchar(255) not null,
     link varchar(255) not null unique,
     raw_file_id int not null unique,
     metadata jsonb null,
@@ -21,6 +22,7 @@ create table web_videos(
 create table web_video_subtitles(
     id serial primary key,
     web_video_id int not null,
+    path varchar (255) not null,
     language varchar(255) not null,
     link varchar(255) not null unique,
     metadata jsonb null,
