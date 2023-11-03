@@ -25,8 +25,7 @@ public class QueueService : IQueueService
     }
     public void EnqueueMessage<T>(string queueName, T message)
     {
-        using var connection = _rabbitMQClient.CreateConnection();
-        _rabbitMQClient.SendMessage(connection, queueName, message);
+        _rabbitMQClient.SendMessage(queueName, message);
     }
 
     public void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata)
@@ -41,11 +40,10 @@ public class QueueService : IQueueService
 
     public IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)
     {
-        using var connection = _rabbitMQClient.CreateConnection();
         var messages = new List<(string messageId, T message)>();
         for (int i = 0; i < maxMessages; i++)
         {
-            var message = _rabbitMQClient.ReadMessage<T>(connection, queueName);
+            var message = _rabbitMQClient.ReadMessage<T>(queueName);
             if (message is null)
             {
                 break;

@@ -7,17 +7,22 @@ namespace Clients.RabbitMQ;
 
 public interface IRabbitMQClient
 {
+
     IConnection CreateConnection();
-    void SendMessage<T>(IConnection connection, string queueName, T message);
-    RabbitMQMessage<T>? ReadMessage<T>(IConnection connection, string queueName);
+    void SendMessage<T>(string queueName, T message);
+    RabbitMQMessage<T>? ReadMessage<T>(string queueName);
 }
 
 public class RabbitMQClient : IRabbitMQClient
 {
     private readonly RabbitMQClientConfiguration _configuration;
+    private readonly IConnection _connection;
+    private readonly IModel _model;
     public RabbitMQClient(RabbitMQClientConfiguration configuration)
     {
         _configuration = configuration;
+        _connection = CreateConnection();
+        _model = CreateModel();
     }
 
     public IConnection CreateConnection()
@@ -26,10 +31,14 @@ public class RabbitMQClient : IRabbitMQClient
         return factory.CreateConnection();
     }
 
-    public static void SendMessageAsString(IConnection connection, string queueName, string message)
+    public IModel CreateModel()
     {
-        using var channel = connection.CreateModel();
-        channel.QueueDeclare(queue: queueName,
+        return _connection.CreateModel();
+    }
+
+    public void SendMessageAsString(string queueName, string message)
+    {
+        _model.QueueDeclare(queue: queueName,
                              durable: true,
                              exclusive: false,
                              autoDelete: false,
@@ -37,29 +46,28 @@ public class RabbitMQClient : IRabbitMQClient
 
         var body = Encoding.UTF8.GetBytes(message);
 
-        channel.BasicPublish(exchange: "",
+        _model.BasicPublish(exchange: "",
                              routingKey: queueName,
                              basicProperties: null,
                              body: body);
     }
 
-    public void SendMessage<T>(IConnection connection, string queueName, T message)
+    public void SendMessage<T>(string queueName, T message)
     {
         var messageAsString = JsonSerializer.Serialize(message);
-        SendMessageAsString(connection, queueName, messageAsString);
+        SendMessageAsString(queueName, messageAsString);
 
     }
 
-    public static RabbitMQMessage<string>? ReadMessageAsString(IConnection connection, string queueName)
+    public RabbitMQMessage<string>? ReadMessageAsString(string queueName)
     {
-        using var channel = connection.CreateModel();
-        channel.QueueDeclare(queue: queueName,
+        _model.QueueDeclare(queue: queueName,
                              durable: true,
                              exclusive: false,
                              autoDelete: false,
                              arguments: null);
 
-        var data = channel.BasicGet(queueName, true);
+        var data = _model.BasicGet(queueName, true);
         if (data == null)
         {
             return null;
@@ -69,9 +77,9 @@ public class RabbitMQClient : IRabbitMQClient
         return new RabbitMQMessage<string>(deliveryTag.ToString(), message);
     }
 
-    public RabbitMQMessage<T>? ReadMessage<T>(IConnection connection, string queueName)
+    public RabbitMQMessage<T>? ReadMessage<T>(string queueName)
     {
-        var messageAsString = ReadMessageAsString(connection, queueName);
+        var messageAsString = ReadMessageAsString(queueName);
         if (messageAsString == null)
         {
             return null;
