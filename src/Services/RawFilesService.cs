@@ -1,7 +1,6 @@
 ﻿using Clients.BlobStorage;
 using Repositories;
 using Repositories.Models;
-using Xabe.FFmpeg;
 
 namespace Services;
 
@@ -54,42 +53,11 @@ public class RawFilesService : IRawFilesService
         return rawFile;
     }
 
-    private static Metadata BuildFileMetadata(IMediaInfo mediaInfo)
-    {
-        return new Metadata
-        {
-            Duration = mediaInfo.Duration,
-            Size = mediaInfo.Size,
-            AudioStreams = mediaInfo.AudioStreams.Select(
-                (stream) => new Repositories.Models.AudioStream
-                {
-                    Duration = stream.Duration,
-                    Bitrate = stream.Bitrate,
-                    SampleRate = stream.SampleRate,
-                    Channels = stream.Channels,
-                    Language = stream.Language,
-                    Title = stream.Title,
-                    Default = stream.Default,
-                    Forced = stream.Forced,
-                }
-            ),
-            SubtitleStreams = mediaInfo.SubtitleStreams.Select(
-                (stream) => new Repositories.Models.SubtitleStream
-                {
-                    Language = stream.Language,
-                    Title = stream.Title,
-                    Default = stream.Default,
-                    Forced = stream.Forced,
-                }
-            ),
-        };
-    }
-
     public async Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadata(rawFile.Path, cancellationToken);
-        await _rawFilesRepository.UpdateMetadataAsync(id, BuildFileMetadata(metadata), cancellationToken);
+        await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
 
         return rawFile;
     }

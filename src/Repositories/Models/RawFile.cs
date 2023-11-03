@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Npgsql;
+using Xabe.FFmpeg;
 
 namespace Repositories.Models;
 
@@ -12,7 +13,7 @@ public class RawFile
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
-    public Metadata? Metadata { get; set; }
+    public IMediaInfo? Metadata { get; set; }
 
     public string GetFormat()
     {
@@ -53,7 +54,7 @@ public class RawFile
         if (metadataOrdinal >= 0)
             rawFile.Metadata = reader.IsDBNull(metadataOrdinal)
                        ? null
-                       : JsonSerializer.Deserialize<Metadata>(reader.GetString(metadataOrdinal));
+                       : JsonSerializer.Deserialize<IMediaInfo>(reader.GetString(metadataOrdinal));
 
         return rawFile;
     }
@@ -65,33 +66,4 @@ public enum ConversionStatus
     Converting,
     Converted,
     Error
-}
-
-public class Metadata
-{
-    public TimeSpan Duration { get; set; }
-    public long Size { get; set; }
-    public IEnumerable<AudioStream> AudioStreams { get; set; } = new List<AudioStream>();
-    public IEnumerable<SubtitleStream> SubtitleStreams { get; set; } = new List<SubtitleStream>();
-
-}
-
-public class AudioStream
-{
-    public TimeSpan Duration { get; set; }
-    public long Bitrate { get; set; }
-    public int SampleRate { get; set; }
-    public int Channels { get; set; }
-    public string Language { get; set; } = "";
-    public string? Title { get; set; }
-    public int? Default { get; set; }
-    public int? Forced { get; set; }
-}
-
-public class SubtitleStream
-{
-    public string Language { get; set; } = "";
-    public string? Title { get; set; }
-    public int? Default { get; set; }
-    public int? Forced { get; set; }
 }

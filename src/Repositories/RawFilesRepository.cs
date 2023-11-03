@@ -3,6 +3,7 @@ using Npgsql;
 using NpgsqlTypes;
 using Repositories.Models;
 using Repositories.Postgres;
+using Xabe.FFmpeg;
 
 namespace Repositories;
 
@@ -12,7 +13,7 @@ public interface IRawFilesRepository
     Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
     Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default);
     Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
-    Task UpdateMetadataAsync(int id, Metadata metadata, CancellationToken cancellationToken = default);
+    Task UpdateMetadataAsync(int id, IMediaInfo metadata, CancellationToken cancellationToken = default);
 }
 
 class RawFilesRepository : IRawFilesRepository
@@ -103,7 +104,7 @@ class RawFilesRepository : IRawFilesRepository
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
-    public async Task UpdateMetadataAsync(int id, Metadata metadata, CancellationToken cancellationToken = default)
+    public async Task UpdateMetadataAsync(int id, IMediaInfo metadata, CancellationToken cancellationToken = default)
     {
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
