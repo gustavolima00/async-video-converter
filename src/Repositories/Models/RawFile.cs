@@ -8,7 +8,7 @@ public class RawFile
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
-    public string? ConvertedPath { get; set; }
+    public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
     public Metadata? Metadata { get; set; }
 
     public string GetFormat()
@@ -21,7 +21,7 @@ public class RawFile
         int idOrdinal = reader.GetOrdinal("id");
         int nameOrdinal = reader.GetOrdinal("name");
         int pathOrdinal = reader.GetOrdinal("path");
-        int convertedPathOrdinal = reader.GetOrdinal("converted_path");
+        int conversionStatusOrdinal = reader.GetOrdinal("conversion_status");
         int metadataOrdinal = reader.GetOrdinal("metadata");
         var rawFile = new RawFile();
         if (idOrdinal >= 0)
@@ -33,10 +33,20 @@ public class RawFile
         if (pathOrdinal >= 0)
             rawFile.Path = reader.GetString(pathOrdinal);
 
-        if (convertedPathOrdinal >= 0)
-            rawFile.ConvertedPath = reader.IsDBNull(convertedPathOrdinal)
-                            ? null
-                            : reader.GetString(convertedPathOrdinal);
+        if (conversionStatusOrdinal >= 0)
+        {
+            var statusString = reader.GetString(conversionStatusOrdinal);
+            if (Enum.TryParse(statusString, out ConversionStatus status))
+            {
+                rawFile.ConversionStatus = status;
+            }
+            else
+            {
+                throw new Exception($"Unknown conversion status: {statusString}");
+            }
+        }
+
+
         if (metadataOrdinal >= 0)
             rawFile.Metadata = reader.IsDBNull(metadataOrdinal)
                        ? null
@@ -44,6 +54,14 @@ public class RawFile
 
         return rawFile;
     }
+}
+
+public enum ConversionStatus
+{
+    NotConverted,
+    Converting,
+    Converted,
+    Error
 }
 
 public class Metadata
