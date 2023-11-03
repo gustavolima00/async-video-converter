@@ -11,6 +11,7 @@ public interface IWebVideosRepository
     Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
+    Task<WebVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
 }
 
 class WebVideosRepository : IWebVideosRepository
@@ -46,7 +47,7 @@ class WebVideosRepository : IWebVideosRepository
         string query = $"SELECT {allFields} from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id";
         await using var command = new NpgsqlCommand(query, connection);
         var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var result =  await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
+        var result = await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
         return result;
     }
 
