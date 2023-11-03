@@ -1,6 +1,7 @@
 ﻿using Clients.BlobStorage;
 using Repositories;
 using Repositories.Models;
+using Services.Models;
 
 namespace Services;
 
@@ -44,7 +45,11 @@ public class RawFilesService : IRawFilesService
     {
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
         var rawFile = await _rawFilesRepository.CreateOrReplaceByPathAsync(fileMetadata.Name, fileMetadata.Path, cancellationToken);
-        _queueService.EnqueueFileToFillMetadata(rawFile.Id);
+        _queueService.EnqueueFileToFillMetadata(new()
+        {
+            Id = rawFile.Id,
+            FileType = FileType.RawFile
+        });
         _queueService.EnqueueFileToConvert(rawFile.Id);
         return rawFile;
     }

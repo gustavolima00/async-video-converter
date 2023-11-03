@@ -1,11 +1,12 @@
 using Clients.RabbitMQ;
 using Services.Configuration;
+using Services.Models;
 
 namespace Services;
 
 public interface IQueueService
 {
-    void EnqueueFileToFillMetadata(int id);
+    void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata);
     void EnqueueFileToConvert(int id);
 
     void EnqueueMessage<T>(string queueName, T message);
@@ -28,9 +29,9 @@ public class QueueService : IQueueService
         _rabbitMQClient.SendMessage(connection, queueName, message);
     }
 
-    public void EnqueueFileToFillMetadata(int id)
+    public void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata)
     {
-        EnqueueMessage(_queuesConfiguration.FillMetadataQueueName, id);
+        EnqueueMessage(_queuesConfiguration.FillMetadataQueueName, fileToFillMetadata);
     }
 
     public void EnqueueFileToConvert(int id)

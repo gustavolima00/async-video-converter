@@ -1,10 +1,11 @@
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Configuration;
+using Services.Models;
 
 namespace Workers;
 
-public class FillFileMetadataWorker : BaseQueueWorker<int>
+public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 {
     private readonly IRawFilesService _fileStorageService;
     private readonly string _queueName;
@@ -20,8 +21,15 @@ public class FillFileMetadataWorker : BaseQueueWorker<int>
     }
     protected override string QueueUrl => _queueName;
 
-    protected override async Task ProcessMessage(int id, CancellationToken cancellationToken)
+    protected override async Task ProcessMessage(FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
     {
-        await _fileStorageService.FillFileMetadataAsync(id, cancellationToken);
+        if (fileToFillMetadata.FileType == FileType.RawFile)
+        {
+            await _fileStorageService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
     }
 }
