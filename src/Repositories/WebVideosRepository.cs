@@ -3,7 +3,6 @@ using Npgsql;
 using NpgsqlTypes;
 using Repositories.Models;
 using Repositories.Postgres;
-using Xabe.FFmpeg;
 
 namespace Repositories;
 
@@ -28,18 +27,12 @@ class WebVideosRepository : IWebVideosRepository
     {
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
-
-        await using var command = new NpgsqlCommand("SELECT * FROM web_videos WHERE id = @id", connection);
+        var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
+        string allFields = string.Join(", ", fields);
+        await using var command = new NpgsqlCommand($"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE id = @id ", connection);
         command.Parameters.AddWithValue("id", id);
         var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        return WebVideo.BuildFromReader(reader);
-
+        return await WebVideo.BuildFromReader(reader, cancellationToken);
     }
 
     public async Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default)

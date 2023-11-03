@@ -1,7 +1,5 @@
 using System.Text.Json;
-using System.Text.Json.Serialization;
 using Npgsql;
-using Xabe.FFmpeg;
 
 
 namespace Repositories.Models;
@@ -16,36 +14,117 @@ public class WebVideo
 
     public MediaMetadata? Metadata { get; set; }
 
+    public IEnumerable<WebVideoSubtitle> Subtitles { get; set; } = Enumerable.Empty<WebVideoSubtitle>();
+
     public string GetFormat()
     {
         return Name.Split('.').Last();
     }
 
-    public static WebVideo BuildFromReader(NpgsqlDataReader reader)
+    public static IEnumerable<string> FieldsNames()
     {
-        int idOrdinal = reader.GetOrdinal("id");
-        int nameOrdinal = reader.GetOrdinal("name");
-        int linkOrdinal = reader.GetOrdinal("link");
-        int rawFileIdOrdinal = reader.GetOrdinal("raw_file_id");
-        int metadataOrdinal = reader.GetOrdinal("metadata");
-        var webVideo = new WebVideo();
-        if (idOrdinal >= 0)
-            webVideo.Id = reader.GetInt32(idOrdinal);
+        yield return "web_videos.id as web_videos_id";
+        yield return "web_videos.name as web_videos_name";
+        yield return "web_videos.link as web_videos_link";
+        yield return "web_videos.raw_file_id as web_videos_raw_file_id";
+        yield return "web_videos.metadata as web_videos_metadata";
+    }
 
-        if (nameOrdinal >= 0)
-            webVideo.Name = reader.GetString(nameOrdinal);
+    public static async Task<WebVideo?> BuildFromReader(NpgsqlDataReader reader, CancellationToken cancellationToken = default)
+    {
+        WebVideo? webVideo = null;
+        List<WebVideoSubtitle> subtitles = new();
+
+        while (await reader.ReadAsync(cancellationToken))
+        {
+            if (webVideo == null && !reader.IsDBNull(reader.GetOrdinal("web_videos_id")))
+            {
+                webVideo = new WebVideo();
+                int idOrdinal = reader.GetOrdinal("web_videos_id");
+                int nameOrdinal = reader.GetOrdinal("web_videos_name");
+                int linkOrdinal = reader.GetOrdinal("web_videos_link");
+                int rawFileIdOrdinal = reader.GetOrdinal("web_videos_raw_file_id");
+                int metadataOrdinal = reader.GetOrdinal("web_videos_metadata");
+                if (idOrdinal >= 0)
+                    webVideo.Id = reader.GetInt32(idOrdinal);
+
+                if (nameOrdinal >= 0)
+                    webVideo.Name = reader.GetString(nameOrdinal);
+
+                if (linkOrdinal >= 0)
+                    webVideo.Link = reader.GetString(linkOrdinal);
+
+                if (rawFileIdOrdinal >= 0)
+                    webVideo.RawFileId = reader.GetInt32(rawFileIdOrdinal);
+
+                if (metadataOrdinal >= 0)
+                    webVideo.Metadata = reader.IsDBNull(metadataOrdinal)
+                        ? null
+                        : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
+            };
+
+            var subtitle = WebVideoSubtitle.BuildFromReader(reader);
+            if (subtitle is not null)
+            {
+                subtitles.Add(subtitle);
+            }
+        }
+        if (webVideo is not null)
+        {
+            webVideo.Subtitles = subtitles;
+        }
+        return webVideo;
+    }
+}
+
+
+public class WebVideoSubtitle
+{
+    public int Id { get; set; }
+    public int WebVideoId { get; set; }
+    public string Language { get; set; } = "";
+    public string Link { get; set; } = "";
+    public MediaMetadata? Metadata { get; set; }
+
+    public static IEnumerable<string> FieldsNames()
+    {
+        yield return "web_video_subtitles.id as web_video_subtitles_id";
+        yield return "web_video_subtitles.web_video_id as web_video_subtitles_web_video_id";
+        yield return "web_video_subtitles.language as web_video_subtitles_language";
+        yield return "web_video_subtitles.link as web_video_subtitles_link";
+        yield return "web_video_subtitles.metadata as web_video_subtitles_metadata";
+    }
+
+    public static WebVideoSubtitle? BuildFromReader(NpgsqlDataReader reader)
+    {
+        if (reader.IsDBNull(reader.GetOrdinal("web_video_subtitles_id")))
+        {
+            return null;
+        }
+
+        int idOrdinal = reader.GetOrdinal("web_video_subtitles_id");
+        int webVideoIdOrdinal = reader.GetOrdinal("web_video_subtitles_web_video_id");
+        int languageOrdinal = reader.GetOrdinal("web_video_subtitles_language");
+        int linkOrdinal = reader.GetOrdinal("web_video_subtitles_link");
+        int metadataOrdinal = reader.GetOrdinal("web_video_subtitles_metadata");
+        var webVideoSubtitle = new WebVideoSubtitle();
+        if (idOrdinal >= 0)
+            webVideoSubtitle.Id = reader.GetInt32(idOrdinal);
+
+        if (webVideoIdOrdinal >= 0)
+            webVideoSubtitle.WebVideoId = reader.GetInt32(webVideoIdOrdinal);
+
+        if (languageOrdinal >= 0)
+            webVideoSubtitle.Language = reader.GetString(languageOrdinal);
 
         if (linkOrdinal >= 0)
-            webVideo.Link = reader.GetString(linkOrdinal);
-
-        if (rawFileIdOrdinal >= 0)
-            webVideo.RawFileId = reader.GetInt32(rawFileIdOrdinal);
+            webVideoSubtitle.Link = reader.GetString(linkOrdinal);
 
         if (metadataOrdinal >= 0)
-            webVideo.Metadata = reader.IsDBNull(metadataOrdinal)
+            webVideoSubtitle.Metadata = reader.IsDBNull(metadataOrdinal)
                 ? null
                 : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
 
-        return webVideo;
+        return webVideoSubtitle;
     }
 }
