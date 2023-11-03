@@ -58,15 +58,16 @@ class WebVideosRepository : IWebVideosRepository
 
         try
         {
-            await using var deleteCommand = new NpgsqlCommand("DELETE FROM web_videos WHERE link = @link AND raw_file_id = @raw_file_id", connection);
-            deleteCommand.Parameters.AddWithValue("link", webVideo.Link);
+            await using var deleteCommand = new NpgsqlCommand("DELETE FROM web_videos WHERE path = @path AND raw_file_id = @raw_file_id", connection);
+            deleteCommand.Parameters.AddWithValue("path", webVideo.Path);
             deleteCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);
             await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var insertCommand = new NpgsqlCommand("INSERT INTO web_videos (name, link, raw_file_id) VALUES (@name, @link, @raw_file_id) RETURNING id", connection);
+            await using var insertCommand = new NpgsqlCommand("INSERT INTO web_videos (name, path, link, raw_file_id) VALUES (@name, @path, @link, @raw_file_id) RETURNING id", connection);
             insertCommand.Parameters.AddWithValue("name", webVideo.Name);
             insertCommand.Parameters.AddWithValue("link", webVideo.Link);
             insertCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);
+            insertCommand.Parameters.AddWithValue("path", webVideo.Path);
             await using var reader = await insertCommand.ExecuteReaderAsync(cancellationToken);
             await reader.ReadAsync(cancellationToken);
             var id = reader.GetInt32(0);
