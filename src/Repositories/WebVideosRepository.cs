@@ -10,7 +10,7 @@ namespace Repositories;
 public interface IWebVideosRepository
 {
     Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default);
-    Task UpdateMetadataAsync(int id, IMediaInfo metadata, CancellationToken cancellationToken = default);
+    Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
 class WebVideosRepository : IWebVideosRepository
@@ -75,7 +75,7 @@ class WebVideosRepository : IWebVideosRepository
         }
     }
 
-    public async Task UpdateMetadataAsync(int id, IMediaInfo metadata, CancellationToken cancellationToken = default)
+    public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);

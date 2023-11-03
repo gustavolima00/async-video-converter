@@ -14,7 +14,7 @@ public class WebVideo
 
     public int RawFileId { get; set; }
 
-    public IMediaInfo? Metadata { get; set; }
+    public MediaMetadata? Metadata { get; set; }
 
     public string GetFormat()
     {
@@ -44,7 +44,7 @@ public class WebVideo
         if (metadataOrdinal >= 0)
             webVideo.Metadata = reader.IsDBNull(metadataOrdinal)
                 ? null
-                : JsonSerializer.Deserialize<IMediaInfo>(reader.GetString(metadataOrdinal));
+                : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
 
         return webVideo;
     }

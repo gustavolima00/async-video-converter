@@ -1,7 +1,6 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 using Npgsql;
-using Xabe.FFmpeg;
 
 namespace Repositories.Models;
 
@@ -13,7 +12,7 @@ public class RawFile
 
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
-    public IMediaInfo? Metadata { get; set; }
+    public MediaMetadata? Metadata { get; set; }
 
     public string GetFormat()
     {
@@ -54,7 +53,7 @@ public class RawFile
         if (metadataOrdinal >= 0)
             rawFile.Metadata = reader.IsDBNull(metadataOrdinal)
                        ? null
-                       : JsonSerializer.Deserialize<IMediaInfo>(reader.GetString(metadataOrdinal));
+                       : JsonSerializer.Deserialize<MediaMetadata>(reader.GetString(metadataOrdinal));
 
         return rawFile;
     }
