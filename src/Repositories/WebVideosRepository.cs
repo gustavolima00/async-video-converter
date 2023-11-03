@@ -35,6 +35,17 @@ class WebVideosRepository : IWebVideosRepository
         return await WebVideo.BuildFromReader(reader, cancellationToken);
     }
 
+    public async Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = _databaseConnection.GetConnection();
+        await connection.OpenAsync(cancellationToken);
+        var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
+        string allFields = string.Join(", ", fields);
+        await using var command = new NpgsqlCommand($"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id", connection);
+        var reader = await command.ExecuteReaderAsync(cancellationToken);
+        return await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
+    }
+
     public async Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default)
     {
         await using var connection = _databaseConnection.GetConnection();

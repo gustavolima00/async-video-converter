@@ -5,11 +5,11 @@ namespace Api.Controllers;
 
 [Route("raw-file")]
 [ApiController]
-public class RawFileController : ControllerBase
+public class WebVideoController : ControllerBase
 {
     private readonly IRawFilesService _fileStorageService;
 
-    public RawFileController(IRawFilesService fileStorageService)
+    public WebVideoController(IRawFilesService fileStorageService)
     {
         _fileStorageService = fileStorageService;
     }
