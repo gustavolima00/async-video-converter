@@ -24,21 +24,21 @@ public class RawFilesService : IRawFilesService
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
     private readonly IQueueService _queueService;
-    private readonly IWebVideosRepository _webVideosRepository;
+    private readonly IWebVideoService _webVideoService;
 
     public RawFilesService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
         IVideoManagerService videoManagerService,
         IQueueService queueService,
-        IWebVideosRepository webVideosRepository
+        IWebVideoService webVideoService
     )
     {
         _blobStorageClient = blobStorageClient;
         _rawFilesRepository = rawFilesRepository;
         _videoManagerService = videoManagerService;
         _queueService = queueService;
-        _webVideosRepository = webVideosRepository;
+        _webVideoService = webVideoService;
     }
 
     public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
@@ -79,14 +79,7 @@ public class RawFilesService : IRawFilesService
             var webVideoDetails = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
             await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
 
-            string webVideoLink = _blobStorageClient.GetLinkFromPath(webVideoDetails.Path);
-            var webVideo = new WebVideo
-            {
-                Name = webVideoDetails.Name,
-                Link = webVideoLink,
-                RawFileId = id
-            };
-            await _webVideosRepository.CreateOrReplaceAsync(webVideo, cancellationToken);
+            await _webVideoService.CreateOrReplaceWebVideoAsync(webVideoDetails.Path, rawFile.Id, cancellationToken);
         }
         catch
         {
