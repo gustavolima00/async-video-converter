@@ -8,9 +8,9 @@ public interface IQueueService
 {
     void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata);
     void EnqueueFileToConvert(int id);
-
     void EnqueueMessage<T>(string queueName, T message);
-    IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
+    IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
+    void DeleteMessage(ulong messageId);
 }
 
 public class QueueService : IQueueService
@@ -38,9 +38,9 @@ public class QueueService : IQueueService
         EnqueueMessage(_queuesConfiguration.ConvertQueueName, id);
     }
 
-    public IEnumerable<(string messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)
+    public IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)
     {
-        var messages = new List<(string messageId, T message)>();
+        var messages = new List<(ulong messageId, T message)>();
         for (int i = 0; i < maxMessages; i++)
         {
             var message = _rabbitMQClient.ReadMessage<T>(queueName);
@@ -51,5 +51,10 @@ public class QueueService : IQueueService
             messages.Add((message.DeliveryTag, message.Payload));
         }
         return messages;
+    }
+
+    public void DeleteMessage(ulong messageId)
+    {
+        _rabbitMQClient.AckMessage(messageId);
     }
 }

@@ -1,7 +1,6 @@
 using System.Net;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Services;
 
 namespace Workers;
@@ -55,7 +54,7 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         }
     }
 
-    private async Task ProcessMessages(IEnumerable<(string messageId, TMessageType message)> messages, CancellationToken cancellationToken)
+    private async Task ProcessMessages(IEnumerable<(ulong messageId, TMessageType message)> messages, CancellationToken cancellationToken)
     {
         await Task.WhenAll(
             messages.Select(
@@ -64,18 +63,18 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
                     ).ToList());
     }
 
-    private async Task LogAndProcessMessage(string messageId, TMessageType message, CancellationToken cancellationToken)
+    private async Task LogAndProcessMessage(ulong messageId, TMessageType message, CancellationToken cancellationToken)
     {
         _logger.LogInformation($"Processing message: {messageId}");
         try
         {
             await ProcessMessage(message, cancellationToken);
             _logger.LogInformation("Message {@message} processed ", messageId);
+            _queueService.DeleteMessage(messageId);
         }
         catch (Exception e)
         {
             _logger.LogError($"Error processing message: {e.Message}");
-            // _queueService.EnqueueMessage(QueueUrl, message);
         }
     }
     protected abstract Task ProcessMessage(TMessageType message, CancellationToken cancellationToken);

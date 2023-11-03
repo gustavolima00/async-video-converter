@@ -7,10 +7,9 @@ namespace Clients.RabbitMQ;
 
 public interface IRabbitMQClient
 {
-
-    IConnection CreateConnection();
     void SendMessage<T>(string queueName, T message);
     RabbitMQMessage<T>? ReadMessage<T>(string queueName);
+    void AckMessage(ulong messageId);
 }
 
 public class RabbitMQClient : IRabbitMQClient
@@ -67,14 +66,14 @@ public class RabbitMQClient : IRabbitMQClient
                              autoDelete: false,
                              arguments: null);
 
-        var data = _model.BasicGet(queueName, true);
+        var data = _model.BasicGet(queueName, false);
         if (data == null)
         {
             return null;
         }
         var message = Encoding.UTF8.GetString(data.Body.ToArray());
         var deliveryTag = data.DeliveryTag;
-        return new RabbitMQMessage<string>(deliveryTag.ToString(), message);
+        return new RabbitMQMessage<string>(deliveryTag, message);
     }
 
     public RabbitMQMessage<T>? ReadMessage<T>(string queueName)
@@ -86,5 +85,10 @@ public class RabbitMQClient : IRabbitMQClient
         }
         var message = JsonSerializer.Deserialize<T>(messageAsString.Payload) ?? throw new Exception("Could not deserialize message");
         return new RabbitMQMessage<T>(messageAsString.DeliveryTag, message);
+    }
+
+    public void AckMessage(ulong messageId)
+    {
+        _model.BasicAck(messageId, false);
     }
 }
