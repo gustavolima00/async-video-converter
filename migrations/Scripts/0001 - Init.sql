@@ -10,7 +10,7 @@ create table web_videos(
     id serial primary key,
     name varchar(255) not null,
     link varchar(255) not null unique,
-    raw_file_id int null references raw_files(id),
+    raw_file_id int not null unique references raw_files(id),
     metadata jsonb null
 );
 

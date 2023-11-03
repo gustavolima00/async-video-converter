@@ -13,6 +13,7 @@ public static class Register
         services.AddSingleton(postgresConfiguration);
         services.AddSingleton<IDatabaseConnection, DatabaseConnection>();
         services.AddSingleton<IRawFilesRepository, RawFilesRepository>();
+        services.AddSingleton<IWebVideosRepository, WebVideosRepository>();
         return services;
     }
 }
