@@ -23,18 +23,21 @@ public class RawFilesService : IRawFilesService
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
     private readonly IQueueService _queueService;
+    private readonly IWebVideosRepository _webVideosRepository;
 
     public RawFilesService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
         IVideoManagerService videoManagerService,
-        IQueueService queueService
+        IQueueService queueService,
+        IWebVideosRepository webVideosRepository
     )
     {
         _blobStorageClient = blobStorageClient;
         _rawFilesRepository = rawFilesRepository;
         _videoManagerService = videoManagerService;
         _queueService = queueService;
+        _webVideosRepository = webVideosRepository;
     }
 
     public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
@@ -68,8 +71,17 @@ public class RawFilesService : IRawFilesService
         {
             await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
             var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-            await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
+            var webVideoDetails = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
             await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
+
+            string webVideoLink = _blobStorageClient.GetLinkFromPath(webVideoDetails.Path);
+            var webVideo = new WebVideo
+            {
+                Name = webVideoDetails.Name,
+                Link = webVideoLink,
+                RawFileId = id
+            };
+            await _webVideosRepository.CreateOrReplaceAsync(webVideo, cancellationToken);
         }
         catch
         {

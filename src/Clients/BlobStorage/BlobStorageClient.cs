@@ -16,6 +16,7 @@ public interface IBlobStorageClient
     Task<List<ObjectMetadata>> ListFilesAndFoldersAsync(string pathPrefix, CancellationToken cancellationToken = default);
     Task<ObjectMetadata> UploadFileAsync(Stream fileStream, string fileName, string destinationPath, CancellationToken cancellationToken = default);
     Task<Stream> GetFileAsync(string filePath, CancellationToken cancellationToken = default);
+    string GetLinkFromPath(string path);
 }
 
 public class BlobStorageClient : IBlobStorageClient
@@ -44,6 +45,14 @@ public class BlobStorageClient : IBlobStorageClient
 
         builder.Query = query.ToString();
         return builder.ToString();
+    }
+
+    public string GetLinkFromPath(string path)
+    {
+        return BuildUrl("/get-file", new()
+        {
+            ["file_path"] = path
+        });
     }
 
     private async Task<HttpContent> GetAsync(string path, Dictionary<string, string>? queryParameters = null, CancellationToken cancellationToken = default)
