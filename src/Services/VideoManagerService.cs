@@ -2,13 +2,13 @@
 using Clients.BlobStorage;
 using Clients.BlobStorage.Models;
 using Clients.FFmpeg;
-using Xabe.FFmpeg;
+using Repositories.Models;
 
 namespace Services;
 
 public interface IVideoManagerService
 {
-    Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default);
+    Task<MediaMetadata> GetFileMetadata(string path, CancellationToken cancellationToken = default);
     Task<ObjectMetadata> ConvertRawFileToMp4(string fileName, CancellationToken cancellationToken = default);
 }
 
@@ -24,11 +24,12 @@ public class VideoManagerService : IVideoManagerService
     }
 
 
-    public async Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default)
+    public async Task<MediaMetadata> GetFileMetadata(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var extension = Path.GetExtension(path);
-        return await _ffmpegClient.GetFileMetadata(fileStream, extension, cancellationToken);
+        var mediaInfo = await _ffmpegClient.GetFileMetadata(fileStream, extension, cancellationToken);
+        return new MediaMetadata(mediaInfo);
     }
 
     public async Task<ObjectMetadata> ConvertRawFileToMp4(string fileName, CancellationToken cancellationToken = default)

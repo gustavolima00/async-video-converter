@@ -55,7 +55,7 @@ class WebVideosRepository : IWebVideosRepository
             deleteCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);
             await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
 
-            await using var insertCommand = new NpgsqlCommand("INSERT INTO raw_files (name, link, raw_file_id) VALUES (@name, @link, @raw_file_id) RETURNING id", connection);
+            await using var insertCommand = new NpgsqlCommand("INSERT INTO web_videos (name, link, raw_file_id) VALUES (@name, @link, @raw_file_id) RETURNING id", connection);
             insertCommand.Parameters.AddWithValue("name", webVideo.Name);
             insertCommand.Parameters.AddWithValue("link", webVideo.Link);
             insertCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);

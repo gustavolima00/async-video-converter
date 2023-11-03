@@ -10,8 +10,12 @@ create table web_videos(
     id serial primary key,
     name varchar(255) not null,
     link varchar(255) not null unique,
-    raw_file_id int not null unique references raw_files(id),
-    metadata jsonb null
+    raw_file_id int not null unique,
+    metadata jsonb null,
+    constraint fk_web_videos_raw_files
+        foreign key (raw_file_id)
+        references raw_files(id)
+        on delete cascade
 );
 
 create table web_video_subtitles(
