@@ -3,7 +3,6 @@ using Npgsql;
 using NpgsqlTypes;
 using Repositories.Models;
 using Repositories.Postgres;
-using Xabe.FFmpeg;
 
 namespace Repositories;
 
