@@ -3,38 +3,26 @@ using Services;
 
 namespace Api.Controllers;
 
-[Route("raw-file")]
+[Route("web-videos")]
 [ApiController]
 public class WebVideoController : ControllerBase
 {
-    private readonly IRawFilesService _fileStorageService;
+    private readonly IWebVideoService _webVideoService;
 
-    public WebVideoController(IRawFilesService fileStorageService)
+    public WebVideoController(IWebVideoService webVideoService)
     {
-        _fileStorageService = fileStorageService;
+        _webVideoService = webVideoService;
     }
 
-    [HttpPost("send")]
-    public async Task<IActionResult> SendFileToConversion(IFormFile file, [FromQuery] string fileName, CancellationToken cancellationToken)
+    [HttpGet("")]
+    public async Task<IActionResult> ListWebVideos(CancellationToken cancellationToken)
     {
         try
         {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("Arquivo não enviado ou está vazio.");
-            }
-
-            if (string.IsNullOrEmpty(fileName))
-            {
-                return BadRequest("Nome do arquivo não fornecido.");
-            }
-
-
-            using var stream = file.OpenReadStream();
-            var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, cancellationToken);
-            return Ok(fileDetails);
+            var result = await _webVideoService.ListWebVideosAsync(cancellationToken);
+            return Ok(result);
         }
-        catch (RawFileServiceException e)
+        catch (WebVideoServiceException e)
         {
             return BadRequest(new ProblemDetails
             {
@@ -43,29 +31,5 @@ public class WebVideoController : ControllerBase
             });
         }
     }
-
-    [HttpGet("get")]
-    public async Task<IActionResult> GetFile([FromQuery] string fileName, CancellationToken cancellationToken)
-    {
-        try
-        {
-            if (string.IsNullOrEmpty(fileName))
-            {
-                return BadRequest("Caminho do arquivo não fornecido.");
-            }
-
-            var fileDetails = await _fileStorageService.GetRawFileAsync(fileName, cancellationToken);
-            return Ok(fileDetails);
-        }
-        catch (RawFileServiceException e)
-        {
-            return BadRequest(new ProblemDetails
-            {
-                Title = "Erro ao buscar arquivo.",
-                Detail = e.Message,
-            });
-        }
-    }
-
 }
 

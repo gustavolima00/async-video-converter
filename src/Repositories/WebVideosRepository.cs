@@ -8,6 +8,7 @@ namespace Repositories;
 
 public interface IWebVideosRepository
 {
+    Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
@@ -28,8 +29,9 @@ class WebVideosRepository : IWebVideosRepository
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
         var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
-        string allFields = string.Join(", ", fields);
-        await using var command = new NpgsqlCommand($"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE id = @id ", connection);
+        string allFields = string.Join(" , ", fields);
+        string query = $"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE id = @id ";
+        await using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("id", id);
         var reader = await command.ExecuteReaderAsync(cancellationToken);
         return await WebVideo.BuildFromReader(reader, cancellationToken);
@@ -40,10 +42,12 @@ class WebVideosRepository : IWebVideosRepository
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
         var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
-        string allFields = string.Join(", ", fields);
-        await using var command = new NpgsqlCommand($"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id", connection);
+        string allFields = string.Join(" , ", fields);
+        string query = $"SELECT {allFields} from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id";
+        await using var command = new NpgsqlCommand(query, connection);
         var reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
+        var result =  await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
+        return result;
     }
 
     public async Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default)

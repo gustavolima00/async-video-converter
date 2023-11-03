@@ -12,6 +12,7 @@ public static class Register
         services.AddSingleton(queuesConfiguration);
         services.AddSingleton<IRawFilesService, RawFilesService>();
         services.AddSingleton<IVideoManagerService, VideoManagerService>();
+        services.AddSingleton<IWebVideoService, WebVideoService>();
         services.AddSingleton<IQueueService, QueueService>();
         return services;
     }

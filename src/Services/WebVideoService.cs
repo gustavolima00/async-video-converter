@@ -1,16 +1,16 @@
-﻿using Clients.BlobStorage;
-using Repositories;
+﻿using Repositories;
 using Repositories.Models;
 
 namespace Services;
 
-public class WebVideoException : Exception
+public class WebVideoServiceException : Exception
 {
-    public WebVideoException(string message) : base(message) { }
+    public WebVideoServiceException(string message) : base(message) { }
 }
 
 public interface IWebVideoService
 {
+    Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default);
 }
 
 public class WebVideoService : IWebVideoService
@@ -22,7 +22,7 @@ public class WebVideoService : IWebVideoService
         _webVideosRepository = webVideosRepository;
     }
 
-    public async Task<IEnumerable<WebVideo>> GetWebVideosAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default)
     {
         var webVideos = await _webVideosRepository.GetAllAsync(cancellationToken);
         return webVideos;

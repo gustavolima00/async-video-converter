@@ -87,27 +87,40 @@ public class WebVideo
     public static async Task<IEnumerable<WebVideo>> BuildMultipleFromReader(NpgsqlDataReader reader, CancellationToken cancellationToken = default)
     {
         List<WebVideo> webVideos = new();
-        List<WebVideoSubtitle> subtitles = new();
-        WebVideo? webVideo = null;
-        HashSet<int> webVideoIds = new();
+        WebVideo? currentWebVideo = null;
 
         while (await reader.ReadAsync(cancellationToken))
         {
-            var webVideo ??= BuildWithoutSubtitlesFromReader(reader);
+            Console.WriteLine(reader);
+            var webVideo = BuildWithoutSubtitlesFromReader(reader);
             var subtitle = WebVideoSubtitle.BuildFromReader(reader);
+            Console.WriteLine($"Web video: {webVideo}");
+            Console.WriteLine($"subtitle: {subtitle}");
+
             if (webVideo is null)
             {
                 break;
             }
+            if (currentWebVideo?.Id != webVideo.Id)
+            {
+                if (currentWebVideo is not null)
+                {
+                    webVideos.Add(currentWebVideo);
+                }
+                else
+                {
+                    currentWebVideo = webVideo;
+                }
+            }
+
             if (subtitle is not null)
             {
-                subtitles.Add(subtitle);
+                _ = currentWebVideo.Subtitles.Append(subtitle);
             }
-
-            if (webVideoIds.Contains(webVideo.Id))
-            {
-
-            }
+        }
+        if (currentWebVideo is not null)
+        {
+            webVideos.Add(currentWebVideo);
         }
 
         return webVideos;
