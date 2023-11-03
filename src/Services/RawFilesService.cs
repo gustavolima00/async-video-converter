@@ -96,9 +96,17 @@ public class RawFilesService : IRawFilesService
 
     public async Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-        var mp4FileMetadata = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
-        rawFile.ConvertedPath = mp4FileMetadata.Path;
-        await _rawFilesRepository.UpdateConvertedPathAsync(id, mp4FileMetadata.Path, cancellationToken);
+        try
+        {
+            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
+            var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+            await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
+            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
+        }
+        catch
+        {
+            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
+            throw;
+        }
     }
 }

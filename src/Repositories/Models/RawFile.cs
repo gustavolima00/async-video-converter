@@ -1,4 +1,5 @@
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Npgsql;
 
 namespace Repositories.Models;
@@ -8,6 +9,8 @@ public class RawFile
     public int Id { get; set; }
     public string Name { get; set; } = "";
     public string Path { get; set; } = "";
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
     public Metadata? Metadata { get; set; }
 

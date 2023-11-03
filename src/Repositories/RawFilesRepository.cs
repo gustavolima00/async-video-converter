@@ -11,7 +11,7 @@ public interface IRawFilesRepository
     Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
     Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default);
-    Task UpdateConvertedPathAsync(int id, string convertedPath, CancellationToken cancellationToken = default);
+    Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, Metadata metadata, CancellationToken cancellationToken = default);
 }
 
@@ -92,15 +92,14 @@ class RawFilesRepository : IRawFilesRepository
         }
     }
 
-
-    public async Task UpdateConvertedPathAsync(int id, string convertedPath, CancellationToken cancellationToken = default)
+    public async Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
     {
         await using var connection = _databaseConnection.GetConnection();
         await connection.OpenAsync(cancellationToken);
 
-        await using var command = new NpgsqlCommand("UPDATE raw_files SET converted_path = @converted_path WHERE id = @id", connection);
+        await using var command = new NpgsqlCommand("UPDATE raw_files SET conversion_status = @conversion_status WHERE id = @id", connection);
         command.AddParameter("id", id);
-        command.AddParameter("converted_path", convertedPath);
+        command.AddParameter("conversion_status", conversionStatus.ToString());
         await command.ExecuteNonQueryAsync(cancellationToken);
     }
 
