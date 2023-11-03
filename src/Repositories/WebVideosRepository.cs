@@ -31,7 +31,7 @@ class WebVideosRepository : IWebVideosRepository
         await connection.OpenAsync(cancellationToken);
         var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
         string allFields = string.Join(" , ", fields);
-        string query = $"SELECT {allFields} FROM web_videos from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE id = @id ";
+        string query = $"SELECT {allFields} from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE web_videos.id = @id ";
         await using var command = new NpgsqlCommand(query, connection);
         command.Parameters.AddWithValue("id", id);
         var reader = await command.ExecuteReaderAsync(cancellationToken);

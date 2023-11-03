@@ -58,6 +58,7 @@ public class WebVideoService : IWebVideoService
         {
             Name = fileName,
             Link = webVideoLink,
+            Path = path,
             RawFileId = rawFileId
         }, cancellationToken);
 
