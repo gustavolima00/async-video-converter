@@ -1,4 +1,5 @@
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using Npgsql;
 using NpgsqlTypes;
 using Repositories.Models;
@@ -15,32 +16,24 @@ public interface IRawFilesRepository
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
-class RawFilesRepository : IRawFilesRepository
+public class RawFilesRepository : IRawFilesRepository
 {
     private readonly IDatabaseConnection _databaseConnection;
+    private readonly DatabaseContext _context;
 
 
-    public RawFilesRepository(IDatabaseConnection databaseConnection)
+    public RawFilesRepository(
+        IDatabaseConnection databaseConnection,
+        DatabaseContext context)
     {
         _databaseConnection = databaseConnection;
+        _context = context;
     }
 
 
     public async Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync(cancellationToken);
-
-        await using var command = new NpgsqlCommand("SELECT * FROM raw_files WHERE id = @id", connection);
-        command.Parameters.AddWithValue("id", id);
-        var reader = await command.ExecuteReaderAsync(cancellationToken);
-
-        if (!await reader.ReadAsync(cancellationToken))
-        {
-            return null;
-        }
-
-        return RawFile.BuildFromReader(reader);
+        return await _context.RawFiles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
     }
 
     public async Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)
