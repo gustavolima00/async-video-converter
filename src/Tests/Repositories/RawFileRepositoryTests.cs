@@ -64,4 +64,31 @@ public class RawFilesRepositoriesTests
         var rawFileFromRepository = await _repository.TryGetByPathAsync("test");
         Assert.Equal(rawFile, rawFileFromRepository);
     }
+
+    [Fact]
+    public async Task CreateOrReplaceByPathAsyncCreatesRawFileWhenNoRawFileWithPathExists()
+    {
+        var rawFile = await _repository.CreateOrReplaceByPathAsync("test", "test");
+        Assert.Equal("test", rawFile.Name);
+        Assert.Equal("test", rawFile.Path);
+        Assert.Equal(ConversionStatus.NotConverted, rawFile.ConversionStatus);
+    }
+
+    [Fact]
+    public async Task CreateOrReplaceByPathAsyncReplacesRawFileWhenRawFileWithPathExists()
+    {
+        var rawFile = new RawFile
+        {
+            Id = 1,
+            Name = "test",
+            Path = "test",
+            ConversionStatus = ConversionStatus.NotConverted
+        };
+        _context.RawFiles.Add(rawFile);
+        await _context.SaveChangesAsync();
+        var rawFileFromRepository = await _repository.CreateOrReplaceByPathAsync("test2", "test");
+        Assert.Equal("test2", rawFileFromRepository.Name);
+        Assert.Equal("test", rawFileFromRepository.Path);
+        Assert.Equal(ConversionStatus.NotConverted, rawFileFromRepository.ConversionStatus);
+    }
 }
