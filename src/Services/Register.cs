@@ -14,6 +14,7 @@ public static class Register
         services.AddSingleton<IVideoManagerService, VideoManagerService>();
         services.AddSingleton<IWebVideoService, WebVideoService>();
         services.AddSingleton<IQueueService, QueueService>();
+        services.AddSingleton<IWebhookService, WebhookService>();
         return services;
     }
 }
