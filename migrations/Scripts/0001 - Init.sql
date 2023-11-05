@@ -1,9 +1,21 @@
+create table webhook_user(
+    id serial primary key,
+    uuid uuid not null unique,
+    webhook_url varchar(255) not null
+);
+
 create table raw_files(
     id serial primary key,
     name varchar(255) not null,
     path varchar(255) not null unique,
     conversion_status varchar(255) not null,
-    metadata jsonb null
+    user_uuid uuid,
+    metadata jsonb,
+
+    constraint fk_raw_files_webhook_user
+        foreign key (user_uuid)
+        references webhook_user(uuid)
+        on delete set null
 );
 
 create table web_videos(
