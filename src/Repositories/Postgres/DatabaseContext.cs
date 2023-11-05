@@ -8,6 +8,7 @@ public class DatabaseContext : DbContext
   public DbSet<RawFile> RawFiles { get; set; }
   public DbSet<WebVideo> WebVideos { get; set; }
   public DbSet<WebVideoSubtitle> WebVideoSubtitles { get; set; }
+  public DbSet<WebhookUser> WebhookUsers { get; set; }
 
   private readonly PostgresConfiguration _configuration;
 
@@ -59,6 +60,8 @@ public class DatabaseContext : DbContext
                   .HasColumnType("jsonb");
       }
     });
+
+    modelBuilder.Entity<WebhookUser>();
   }
 
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
