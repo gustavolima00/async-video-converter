@@ -36,12 +36,13 @@ public class RawFilesRepository : IRawFilesRepository
 
     public async Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default)
     {
-        using var transaction = await _context.Database.BeginTransactionAsync(cancellationToken);
+        using var transaction = _context.SupportTransaction
+            ? await _context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
 
         try
         {
-            var existingFile = await _context.RawFiles
-                .SingleOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+            var existingFile = await _context.RawFiles.SingleOrDefaultAsync(rf => rf.Path == path, cancellationToken);
 
             if (existingFile is not null)
             {
@@ -52,18 +53,25 @@ public class RawFilesRepository : IRawFilesRepository
             {
                 Name = name,
                 Path = path,
-                ConversionStatus = ConversionStatus.NotConverted,
-                Metadata = null
+                ConversionStatus = ConversionStatus.NotConverted
             };
 
             await _context.RawFiles.AddAsync(newFile, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
+
+            if (transaction is not null)
+            {
+                await transaction.CommitAsync(cancellationToken);
+            }
+
             return newFile;
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken);
+            if (transaction is not null)
+            {
+                await transaction.RollbackAsync(cancellationToken);
+            }
             throw;
         }
     }

@@ -8,6 +8,8 @@ public class DatabaseContext : DbContext
   public DbSet<RawFile> RawFiles { get; set; }
   private readonly PostgresConfiguration _configuration;
 
+  public bool SupportTransaction => !(_configuration.UseInMemoryDatabase);
+
   public DatabaseContext(PostgresConfiguration postgresConfiguration)
   {
     _configuration = postgresConfiguration;
