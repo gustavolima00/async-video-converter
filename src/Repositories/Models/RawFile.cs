@@ -22,10 +22,8 @@ public class RawFile
     [Column("metadata")]
     public MediaMetadata? Metadata { get; set; }
 
-    public string GetFormat()
-    {
-        return Name.Split('.').Last();
-    }
+    [Column("user_uuid")]
+    public Guid UserUuid { get; set; }
 }
 
 public enum ConversionStatus

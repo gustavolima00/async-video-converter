@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Services;
 
@@ -15,7 +16,11 @@ public class RawFileController : ControllerBase
     }
 
     [HttpPost("send")]
-    public async Task<IActionResult> SendFileToConversion(IFormFile file, [FromQuery] string fileName, CancellationToken cancellationToken)
+    public async Task<IActionResult> SendFileToConversion(
+        IFormFile file,
+        [FromQuery, Required] string fileName,
+        [FromQuery] Guid userUuid,
+        CancellationToken cancellationToken)
     {
         try
         {
@@ -24,14 +29,8 @@ public class RawFileController : ControllerBase
                 return BadRequest("Arquivo não enviado ou está vazio.");
             }
 
-            if (string.IsNullOrEmpty(fileName))
-            {
-                return BadRequest("Nome do arquivo não fornecido.");
-            }
-
-
             using var stream = file.OpenReadStream();
-            var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, cancellationToken);
+            var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, userUuid, cancellationToken);
             return Ok(fileDetails);
         }
         catch (RawFileServiceException e)

@@ -8,7 +8,7 @@ public interface IRawFilesRepository
 {
     Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
-    Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default);
+    Task<RawFile> CreateOrReplaceAsync(RawFile rawFile, CancellationToken cancellationToken = default);
     Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
@@ -34,7 +34,7 @@ public class RawFilesRepository : IRawFilesRepository
         return await _context.RawFiles.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
     }
 
-    public async Task<RawFile> CreateOrReplaceByPathAsync(string name, string path, CancellationToken cancellationToken = default)
+    public async Task<RawFile> CreateOrReplaceAsync(RawFile newFile, CancellationToken cancellationToken = default)
     {
         using var transaction = _context.SupportTransaction
             ? await _context.Database.BeginTransactionAsync(cancellationToken)
@@ -42,19 +42,15 @@ public class RawFilesRepository : IRawFilesRepository
 
         try
         {
-            var existingFile = await _context.RawFiles.SingleOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+            var existingFile = await _context.RawFiles.FirstOrDefaultAsync(
+                rf => rf.Path == newFile.Path &&
+                rf.UserUuid == newFile.UserUuid,
+                cancellationToken);
 
             if (existingFile is not null)
             {
                 _context.RawFiles.Remove(existingFile);
             }
-
-            var newFile = new RawFile
-            {
-                Name = name,
-                Path = path,
-                ConversionStatus = ConversionStatus.NotConverted
-            };
 
             await _context.RawFiles.AddAsync(newFile, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);

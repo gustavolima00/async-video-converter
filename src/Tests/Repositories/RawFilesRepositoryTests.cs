@@ -69,7 +69,13 @@ public class RawFilesRepositoriesTests
     [Fact]
     public async Task CreateOrReplaceByPathAsyncCreatesRawFileWhenNoRawFileWithPathExists()
     {
-        var rawFile = await _repository.CreateOrReplaceByPathAsync("test", "test");
+        var rawFile = await _repository.CreateOrReplaceAsync(
+            new RawFile
+            {
+                Path = "test",
+                UserUuid = Guid.NewGuid(),
+            }
+        );
         Assert.Equal("test", rawFile.Name);
         Assert.Equal("test", rawFile.Path);
         Assert.Equal(ConversionStatus.NotConverted, rawFile.ConversionStatus);
@@ -87,8 +93,37 @@ public class RawFilesRepositoriesTests
         };
         _context.RawFiles.Add(rawFile);
         await _context.SaveChangesAsync();
-        var rawFileFromRepository = await _repository.CreateOrReplaceByPathAsync("test2", "test");
+        var rawFileFromRepository = await _repository.CreateOrReplaceAsync(
+            new RawFile
+            {
+                Path = "test",
+                UserUuid = Guid.NewGuid(),
+            }
+        );
         Assert.Equal("test2", rawFileFromRepository.Name);
+        Assert.Equal("test", rawFileFromRepository.Path);
+        Assert.Equal(ConversionStatus.NotConverted, rawFileFromRepository.ConversionStatus);
+    }
+
+    [Fact]
+    public async Task CreateOrReplaceByPathWithDifferentUser()
+    {
+        var rawFile = new RawFile
+        {
+            Path = "test",
+            ConversionStatus = ConversionStatus.NotConverted,
+            UserUuid = Guid.NewGuid()
+        };
+        _context.RawFiles.Add(rawFile);
+        await _context.SaveChangesAsync();
+        var rawFileFromRepository = await _repository.CreateOrReplaceAsync(
+            new RawFile
+            {
+                Path = "test",
+                UserUuid = Guid.NewGuid(),
+            }
+        );
+        Assert.Equal("test", rawFileFromRepository.Name);
         Assert.Equal("test", rawFileFromRepository.Path);
         Assert.Equal(ConversionStatus.NotConverted, rawFileFromRepository.ConversionStatus);
     }

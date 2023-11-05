@@ -12,7 +12,7 @@ public class RawFileServiceException : Exception
 
 public interface IRawFilesService
 {
-    Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, Guid? userUuid, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default);
     Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default);
@@ -41,10 +41,19 @@ public class RawFilesService : IRawFilesService
         _webVideoService = webVideoService;
     }
 
-    public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, Guid? userUuid, CancellationToken cancellationToken = default)
     {
+        userUuid ??= Guid.NewGuid();
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
-        var rawFile = await _rawFilesRepository.CreateOrReplaceByPathAsync(fileMetadata.Name, fileMetadata.Path, cancellationToken);
+        var rawFile = await _rawFilesRepository.CreateOrReplaceAsync(
+            new RawFile
+            {
+                Name = fileMetadata.Name,
+                Path = fileMetadata.Path,
+                UserUuid = userUuid.Value
+            }
+            , cancellationToken);
+
         _queueService.EnqueueFileToFillMetadata(new()
         {
             Id = rawFile.Id,
