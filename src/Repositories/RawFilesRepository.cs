@@ -83,7 +83,6 @@ public class RawFilesRepository : IRawFilesRepository
         file.ConversionStatus = conversionStatus;
         _context.RawFiles.Update(file);
         await _context.SaveChangesAsync(cancellationToken);
-
     }
 
     public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
