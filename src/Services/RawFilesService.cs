@@ -15,7 +15,8 @@ public interface IRawFilesService
     Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
-    Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default);
+    Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default);
 }
 
 public class RawFilesService : IRawFilesService
@@ -24,21 +25,18 @@ public class RawFilesService : IRawFilesService
     private readonly IRawFilesRepository _rawFilesRepository;
     private readonly IVideoManagerService _videoManagerService;
     private readonly IQueueService _queueService;
-    private readonly IWebVideoService _webVideoService;
 
     public RawFilesService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
         IVideoManagerService videoManagerService,
-        IQueueService queueService,
-        IWebVideoService webVideoService
+        IQueueService queueService
     )
     {
         _blobStorageClient = blobStorageClient;
         _rawFilesRepository = rawFilesRepository;
         _videoManagerService = videoManagerService;
         _queueService = queueService;
-        _webVideoService = webVideoService;
     }
 
     public async Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
@@ -79,21 +77,15 @@ public class RawFilesService : IRawFilesService
         return rawFile;
     }
 
-    public async Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default)
+    public async Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
-        try
-        {
-            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
-            var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-            var webVideoDetails = await _videoManagerService.ConvertRawFileToMp4(rawFile.Name, cancellationToken);
-            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
+        await _rawFilesRepository.UpdateConversionStatusAsync(id, status, cancellationToken);
+    }
 
-            await _webVideoService.CreateOrReplaceWebVideoAsync(webVideoDetails.Path, rawFile.Id, cancellationToken);
-        }
-        catch
-        {
-            await _rawFilesRepository.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
-            throw;
-        }
+    public async Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        var mp4Stream = await _videoManagerService.ConvertRawFileToMp4(rawFile.Path, cancellationToken);
+        return mp4Stream;
     }
 }

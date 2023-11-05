@@ -14,7 +14,7 @@ public interface IWebVideoService
 {
     Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default);
-    Task CreateOrReplaceWebVideoAsync(string path, int rawFileId, CancellationToken cancellationToken = default);
+    Task SaveWebVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default);
 }
 
 public class WebVideoService : IWebVideoService
@@ -23,18 +23,21 @@ public class WebVideoService : IWebVideoService
     private readonly IVideoManagerService _videoManagerService;
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IQueueService _queueService;
+    private readonly IRawFilesRepository _rawFilesRepository;
 
     public WebVideoService(
         IWebVideosRepository webVideosRepository,
         IVideoManagerService videoManagerService,
         IQueueService queueService,
-        IBlobStorageClient blobStorageClient
+        IBlobStorageClient blobStorageClient,
+        IRawFilesRepository rawFilesRepository
     )
     {
         _webVideosRepository = webVideosRepository;
         _videoManagerService = videoManagerService;
         _queueService = queueService;
         _blobStorageClient = blobStorageClient;
+        _rawFilesRepository = rawFilesRepository;
     }
 
     public async Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default)
@@ -50,15 +53,18 @@ public class WebVideoService : IWebVideoService
         await _webVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
-    public async Task CreateOrReplaceWebVideoAsync(string path, int rawFileId, CancellationToken cancellationToken = default)
+    public async Task SaveWebVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
-        string webVideoLink = _blobStorageClient.GetLinkFromPath(path);
-        string fileName = Path.GetFileName(path);
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {rawFileId} not found");
+        var folderPath = $"{rawFile.UserUuid}/web_videos";
+        var fileName = $"{Path.GetFileNameWithoutExtension(rawFile.Name)}.mp4";
+        var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);
+        string webVideoLink = _blobStorageClient.GetLinkFromPath(fileMetadata.Path);
         var webVideo = await _webVideosRepository.CreateOrReplaceAsync(new()
         {
             Name = fileName,
             Link = webVideoLink,
-            Path = path,
+            Path = fileMetadata.Path,
             RawFileId = rawFileId
         }, cancellationToken);
 
