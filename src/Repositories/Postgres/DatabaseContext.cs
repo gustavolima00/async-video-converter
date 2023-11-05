@@ -34,7 +34,7 @@ public class DatabaseContext : DbContext
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
   {
     if (_configuration.UseInMemoryDatabase)
-      optionsBuilder.UseInMemoryDatabase("raw_files");
+      optionsBuilder.UseInMemoryDatabase(Guid.NewGuid().ToString());
     else
       optionsBuilder.UseNpgsql(_configuration.ConnectionString);
   }
