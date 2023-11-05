@@ -92,4 +92,27 @@ public class RawFilesRepositoriesTests
         Assert.Equal("test", rawFileFromRepository.Path);
         Assert.Equal(ConversionStatus.NotConverted, rawFileFromRepository.ConversionStatus);
     }
+
+    [Fact]
+    public async Task UpdateConversionStatusAsyncUpdatesConversionStatus()
+    {
+        var rawFile = new RawFile
+        {
+            Id = 1,
+            Name = "test",
+            Path = "test",
+            ConversionStatus = ConversionStatus.NotConverted
+        };
+        _context.RawFiles.Add(rawFile);
+        await _context.SaveChangesAsync();
+        await _repository.UpdateConversionStatusAsync(1, ConversionStatus.Converted);
+        var rawFileFromRepository = await _repository.TryGetByIdAsync(1) ?? throw new InvalidOperationException();
+        Assert.Equal(ConversionStatus.Converted, rawFileFromRepository.ConversionStatus);
+    }
+
+    [Fact]
+    public async Task UpdateConversionStatusAsyncThrowsWhenNoRawFileWithIdExists()
+    {
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.UpdateConversionStatusAsync(1, ConversionStatus.Converted));
+    }
 }

@@ -79,25 +79,19 @@ public class RawFilesRepository : IRawFilesRepository
 
     public async Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
     {
-        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken);
+        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        file.ConversionStatus = conversionStatus;
+        _context.RawFiles.Update(file);
+        await _context.SaveChangesAsync(cancellationToken);
 
-        if (file != null)
-        {
-            file.ConversionStatus = conversionStatus;
-            _context.RawFiles.Update(file);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
     }
 
     public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
-        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken);
+        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        file.Metadata = metadata;
+        _context.RawFiles.Update(file);
+        await _context.SaveChangesAsync(cancellationToken);
 
-        if (file != null)
-        {
-            file.Metadata = metadata;
-            _context.RawFiles.Update(file);
-            await _context.SaveChangesAsync(cancellationToken);
-        }
     }
 }
