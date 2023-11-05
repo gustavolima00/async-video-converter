@@ -28,7 +28,7 @@ public class WebVideo
 
     public MediaMetadata? Metadata { get; set; }
 
-    public IEnumerable<WebVideoSubtitle> Subtitles { get; set; } = Enumerable.Empty<WebVideoSubtitle>();
+    public ICollection<WebVideoSubtitle> Subtitles { get; set; } = new List<WebVideoSubtitle>();
 }
 
 
