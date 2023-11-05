@@ -1,6 +1,4 @@
-using System.Text.Json;
-using Npgsql;
-using NpgsqlTypes;
+using Microsoft.EntityFrameworkCore;
 using Repositories.Models;
 using Repositories.Postgres;
 
@@ -14,86 +12,60 @@ public interface IWebVideosRepository
     Task<WebVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
 }
 
-class WebVideosRepository : IWebVideosRepository
+public class WebVideosRepository : IWebVideosRepository
 {
-    private readonly IDatabaseConnection _databaseConnection;
+    private readonly DatabaseContext _context;
 
 
-    public WebVideosRepository(IDatabaseConnection databaseConnection)
+    public WebVideosRepository(DatabaseContext context)
     {
-        _databaseConnection = databaseConnection;
+        _context = context;
     }
 
 
     public async Task<WebVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync(cancellationToken);
-        var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
-        string allFields = string.Join(" , ", fields);
-        string query = $"SELECT {allFields} from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id WHERE web_videos.id = @id ";
-        await using var command = new NpgsqlCommand(query, connection);
-        command.Parameters.AddWithValue("id", id);
-        var reader = await command.ExecuteReaderAsync(cancellationToken);
-        return await WebVideo.BuildFromReader(reader, cancellationToken);
+        return await _context.WebVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
     }
 
     public async Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync(cancellationToken);
-        var fields = WebVideo.FieldsNames().Concat(WebVideoSubtitle.FieldsNames());
-        string allFields = string.Join(" , ", fields);
-        string query = $"SELECT {allFields} from web_videos left join web_video_subtitles on web_video_subtitles.web_video_id = web_videos.id";
-        await using var command = new NpgsqlCommand(query, connection);
-        var reader = await command.ExecuteReaderAsync(cancellationToken);
-        var result = await WebVideo.BuildMultipleFromReader(reader, cancellationToken);
-        return result;
+        return await _context.WebVideos.ToListAsync(cancellationToken);
     }
 
     public async Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync(cancellationToken);
-        await using var transaction = await connection.BeginTransactionAsync(cancellationToken);
+        using var transaction = _context.SupportTransaction
+            ? await _context.Database.BeginTransactionAsync(cancellationToken)
+            : null;
 
         try
         {
-            await using var deleteCommand = new NpgsqlCommand("DELETE FROM web_videos WHERE path = @path AND raw_file_id = @raw_file_id", connection);
-            deleteCommand.Parameters.AddWithValue("path", webVideo.Path);
-            deleteCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);
-            await deleteCommand.ExecuteNonQueryAsync(cancellationToken);
+            var existingFile = await _context.WebVideos.SingleOrDefaultAsync(rf => rf.Path == webVideo.Path, cancellationToken);
 
-            await using var insertCommand = new NpgsqlCommand("INSERT INTO web_videos (name, path, link, raw_file_id) VALUES (@name, @path, @link, @raw_file_id) RETURNING id", connection);
-            insertCommand.Parameters.AddWithValue("name", webVideo.Name);
-            insertCommand.Parameters.AddWithValue("link", webVideo.Link);
-            insertCommand.Parameters.AddWithValue("raw_file_id", webVideo.RawFileId);
-            insertCommand.Parameters.AddWithValue("path", webVideo.Path);
-            await using var reader = await insertCommand.ExecuteReaderAsync(cancellationToken);
-            await reader.ReadAsync(cancellationToken);
-            var id = reader.GetInt32(0);
-            webVideo.Id = id;
-            await reader.CloseAsync();
+            if (existingFile is not null)
+            {
+                _context.WebVideos.Remove(existingFile);
+            }
 
-            await transaction.CommitAsync(cancellationToken);
+            await _context.WebVideos.AddAsync(webVideo, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            transaction?.Commit();
+
             return webVideo;
         }
         catch
         {
-            await transaction.RollbackAsync(cancellationToken);
+            transaction?.Rollback();
             throw;
         }
     }
 
     public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
-        await using var connection = _databaseConnection.GetConnection();
-        await connection.OpenAsync(cancellationToken);
-
-        await using var command = new NpgsqlCommand("UPDATE web_videos SET metadata = @metadata WHERE id = @id", connection);
-        command.AddParameter("id", id);
-        command.AddParameter("metadata", JsonSerializer.Serialize(metadata), NpgsqlDbType.Jsonb);
-        await command.ExecuteNonQueryAsync(cancellationToken);
-
+        var webVideo = await _context.WebVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No web video with id {id} exists");
+        webVideo.Metadata = metadata;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

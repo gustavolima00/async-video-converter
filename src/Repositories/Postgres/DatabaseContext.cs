@@ -6,6 +6,9 @@ namespace Repositories.Postgres;
 public class DatabaseContext : DbContext
 {
   public DbSet<RawFile> RawFiles { get; set; }
+  public DbSet<WebVideo> WebVideos { get; set; }
+  public DbSet<WebVideoSubtitle> WebVideoSubtitles { get; set; }
+
   private readonly PostgresConfiguration _configuration;
 
   public bool SupportTransaction => !_configuration.UseInMemoryDatabase;
@@ -22,6 +25,33 @@ public class DatabaseContext : DbContext
       if (_configuration.UseInMemoryDatabase)
       {
         modelBuilder.Entity<RawFile>().Ignore(rf => rf.Metadata);
+      }
+      else
+      {
+        entity.Property(e => e.Metadata)
+                  .HasColumnType("jsonb");
+      }
+    });
+
+    modelBuilder.Entity<WebVideo>(entity =>
+    {
+      if (_configuration.UseInMemoryDatabase)
+      {
+        modelBuilder.Entity<WebVideo>().Ignore(wv => wv.Metadata);
+      }
+      else
+      {
+        entity.Property(e => e.Metadata)
+                  .HasColumnType("jsonb");
+      }
+
+    });
+
+    modelBuilder.Entity<WebVideoSubtitle>(entity =>
+    {
+      if (_configuration.UseInMemoryDatabase)
+      {
+        modelBuilder.Entity<WebVideoSubtitle>().Ignore(wvs => wvs.Metadata);
       }
       else
       {
