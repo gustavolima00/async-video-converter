@@ -19,7 +19,7 @@ public class RawFileController : ControllerBase
     public async Task<IActionResult> SendFileToConversion(
         IFormFile file,
         [FromQuery, Required] string fileName,
-        [FromQuery] Guid userUuid,
+        [FromQuery, Required] Guid userUuid,
         CancellationToken cancellationToken)
     {
         try
@@ -30,7 +30,7 @@ public class RawFileController : ControllerBase
             }
 
             using var stream = file.OpenReadStream();
-            var fileDetails = await _fileStorageService.SaveRawFileAsync(stream, fileName, userUuid, cancellationToken);
+            var fileDetails = await _fileStorageService.SaveRawFileAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (RawFileServiceException e)
@@ -44,7 +44,11 @@ public class RawFileController : ControllerBase
     }
 
     [HttpGet("get")]
-    public async Task<IActionResult> GetFile([FromQuery] string fileName, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetFile(
+        [FromQuery, Required] string fileName,
+        [FromQuery, Required] Guid userUuid,
+        CancellationToken cancellationToken
+        )
     {
         try
         {
@@ -53,7 +57,7 @@ public class RawFileController : ControllerBase
                 return BadRequest("Caminho do arquivo não fornecido.");
             }
 
-            var fileDetails = await _fileStorageService.GetRawFileAsync(fileName, cancellationToken);
+            var fileDetails = await _fileStorageService.GetRawFileAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (RawFileServiceException e)

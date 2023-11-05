@@ -12,9 +12,9 @@ public class RawFileServiceException : Exception
 
 public interface IRawFilesService
 {
-    Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, Guid? userUuid, CancellationToken cancellationToken = default);
+    Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
-    Task<RawFile> GetRawFileAsync(string path, CancellationToken cancellationToken = default);
+    Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
     Task ConvertFileToMp4(int id, CancellationToken cancellationToken = default);
 }
 
@@ -41,16 +41,16 @@ public class RawFilesService : IRawFilesService
         _webVideoService = webVideoService;
     }
 
-    public async Task<RawFile> SaveRawFileAsync(Stream fileStream, string fileName, Guid? userUuid, CancellationToken cancellationToken = default)
+    public async Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
-        userUuid ??= Guid.NewGuid();
-        var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, "raw_files", cancellationToken);
+        var folderPath = $"{userUuid}/raw_files";
+        var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
         var rawFile = await _rawFilesRepository.CreateOrReplaceAsync(
             new RawFile
             {
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
-                UserUuid = userUuid.Value
+                UserUuid = userUuid
             }
             , cancellationToken);
 
@@ -63,9 +63,9 @@ public class RawFilesService : IRawFilesService
         return rawFile;
     }
 
-    public async Task<RawFile> GetRawFileAsync(string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
     {
-        string path = $"raw_files/{fileName}";
+        string path = $"{userUuid}/raw_files/{fileName}";
         var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawFileServiceException($"Raw file with path {path} not found");
         return rawFile;
     }
