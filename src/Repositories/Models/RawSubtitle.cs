@@ -3,8 +3,8 @@ using System.Text.Json.Serialization;
 
 namespace Repositories.Models;
 
-[Table("raw_videos")]
-public class RawVideo
+[Table("raw_subtitles")]
+public class RawSubtitle
 {
     [Column("id")]
     public int Id { get; set; }
@@ -24,4 +24,8 @@ public class RawVideo
 
     [Column("user_uuid")]
     public Guid UserUuid { get; set; }
+
+    [Column("raw_video_id")]
+    public int RawVideoId { get; set; }
 }
+

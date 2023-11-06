@@ -5,10 +5,11 @@ namespace Repositories.Postgres;
 
 public class DatabaseContext : DbContext
 {
+  public DbSet<WebhookUser> WebhookUsers { get; set; }
   public DbSet<RawVideo> RawVideos { get; set; }
+  public DbSet<RawSubtitle> RawSubtitles { get; set; }
   public DbSet<ConvertedVideo> ConvertedVideos { get; set; }
   public DbSet<ConvertedSubtitle> ConvertedSubtitles { get; set; }
-  public DbSet<WebhookUser> WebhookUsers { get; set; }
 
   private readonly PostgresConfiguration _configuration;
 
@@ -21,11 +22,26 @@ public class DatabaseContext : DbContext
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
+    modelBuilder.Entity<WebhookUser>();
+
     modelBuilder.Entity<RawVideo>(entity =>
     {
       if (_configuration.UseInMemoryDatabase)
       {
         modelBuilder.Entity<RawVideo>().Ignore(rf => rf.Metadata);
+      }
+      else
+      {
+        entity.Property(e => e.Metadata)
+                  .HasColumnType("jsonb");
+      }
+    });
+
+    modelBuilder.Entity<RawSubtitle>(entity =>
+    {
+      if (_configuration.UseInMemoryDatabase)
+      {
+        modelBuilder.Entity<RawSubtitle>().Ignore(rs => rs.Metadata);
       }
       else
       {
@@ -61,7 +77,6 @@ public class DatabaseContext : DbContext
       }
     });
 
-    modelBuilder.Entity<WebhookUser>();
   }
 
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
