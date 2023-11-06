@@ -15,8 +15,8 @@ public class RawFileController : ControllerBase
         _fileStorageService = fileStorageService;
     }
 
-    [HttpPost("send")]
-    public async Task<IActionResult> SendFileToConversion(
+    [HttpPost("send-video")]
+    public async Task<IActionResult> SendVideoToConversion(
         IFormFile file,
         [FromQuery, Required] string fileName,
         [FromQuery, Required] Guid userUuid,
@@ -43,7 +43,7 @@ public class RawFileController : ControllerBase
         }
     }
 
-    [HttpGet("get")]
+    [HttpGet]
     public async Task<IActionResult> GetFile(
         [FromQuery, Required] string fileName,
         [FromQuery, Required] Guid userUuid,
@@ -69,6 +69,5 @@ public class RawFileController : ControllerBase
             });
         }
     }
-
 }
 
