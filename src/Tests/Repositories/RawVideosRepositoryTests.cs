@@ -73,6 +73,7 @@ public class RawVideosRepositoriesTests
             new RawVideo
             {
                 Path = "test",
+                Name = "test",
                 UserUuid = Guid.NewGuid(),
             }
         );
@@ -84,11 +85,13 @@ public class RawVideosRepositoriesTests
     [Fact]
     public async Task CreateOrReplaceByPathAsyncReplacesRawVideoWhenRawVideoWithPathExists()
     {
+        var userUuid = Guid.NewGuid();
         var rawFile = new RawVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
+            UserUuid = userUuid,
             ConversionStatus = ConversionStatus.NotConverted
         };
         _context.RawVideos.Add(rawFile);
@@ -97,7 +100,8 @@ public class RawVideosRepositoriesTests
             new RawVideo
             {
                 Path = "test",
-                UserUuid = Guid.NewGuid(),
+                Name = "test2",
+                UserUuid = userUuid,
             }
         );
         Assert.Equal("test2", rawFileFromRepository.Name);
@@ -120,6 +124,7 @@ public class RawVideosRepositoriesTests
             new RawVideo
             {
                 Path = "test",
+                Name = "test",
                 UserUuid = Guid.NewGuid(),
             }
         );
@@ -150,4 +155,21 @@ public class RawVideosRepositoriesTests
     {
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.UpdateConversionStatusAsync(1, ConversionStatus.Converted));
     }
+
+    [Fact]
+    public async Task UpdateConversionStatusAsyncThrowsWhenRawVideoWithIdExists()
+    {
+        var rawFile = new RawVideo
+        {
+            Id = 1,
+            Name = "test",
+            Path = "test",
+            ConversionStatus = ConversionStatus.NotConverted
+        };
+        _context.RawVideos.Add(rawFile);
+        await _context.SaveChangesAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.UpdateConversionStatusAsync(2, ConversionStatus.Converted));
+    }
+
+
 }

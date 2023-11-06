@@ -6,11 +6,19 @@ namespace Repositories;
 
 public interface IRawVideosRepository
 {
+    // Videos
     Task<RawVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
     Task<RawVideo> CreateOrReplaceAsync(RawVideo rawFile, CancellationToken cancellationToken = default);
     Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
+
+    // Subtitles
+    Task<RawSubtitle> CreateOrReplaceRawSubtitleAsync(RawSubtitle rawSubtitle, CancellationToken cancellationToken = default);
+    Task<RawSubtitle?> TryGetRawSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawSubtitle?> TryGetRawSubtitleByPathAsync(string path, CancellationToken cancellationToken = default);
+    Task UpdateRawSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
+    Task UpdateRawSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
 public class RawVideosRepository : IRawVideosRepository
@@ -36,10 +44,7 @@ public class RawVideosRepository : IRawVideosRepository
 
     public async Task<RawVideo> CreateOrReplaceAsync(RawVideo newFile, CancellationToken cancellationToken = default)
     {
-        using var transaction = _context.SupportTransaction
-            ? await _context.Database.BeginTransactionAsync(cancellationToken)
-            : null;
-
+        using var transaction = _context.TryBeginTransaction();
         try
         {
             var existingFile = await _context.RawVideos.FirstOrDefaultAsync(
@@ -55,19 +60,13 @@ public class RawVideosRepository : IRawVideosRepository
             await _context.RawVideos.AddAsync(newFile, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            if (transaction is not null)
-            {
-                await transaction.CommitAsync(cancellationToken);
-            }
+            await transaction.TryCommitAsync(cancellationToken);
 
             return newFile;
         }
         catch
         {
-            if (transaction is not null)
-            {
-                await transaction.RollbackAsync(cancellationToken);
-            }
+            await transaction.TryRollbackAsync(cancellationToken);
             throw;
         }
     }
@@ -88,5 +87,61 @@ public class RawVideosRepository : IRawVideosRepository
         _context.RawVideos.Update(file);
         await _context.SaveChangesAsync(cancellationToken);
 
+    }
+
+    public async Task<RawSubtitle> CreateOrReplaceRawSubtitleAsync(RawSubtitle rawSubtitle, CancellationToken cancellationToken = default)
+    {
+        using var transaction = _context.TryBeginTransaction();
+        try
+        {
+            var existingFile = await _context.RawSubtitles.FirstOrDefaultAsync(
+                rf => rf.Path == rawSubtitle.Path &&
+                rf.UserUuid == rawSubtitle.UserUuid,
+                cancellationToken);
+
+            if (existingFile is not null)
+            {
+                _context.RawSubtitles.Remove(existingFile);
+            }
+
+            await _context.RawSubtitles.AddAsync(rawSubtitle, cancellationToken);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            await transaction.TryCommitAsync(cancellationToken);
+
+            return rawSubtitle;
+        }
+        catch
+        {
+
+            await transaction.TryRollbackAsync(cancellationToken);
+            throw;
+        }
+    }
+
+    public async Task<RawSubtitle?> TryGetRawSubtitleByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.RawSubtitles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
+    }
+
+    public async Task<RawSubtitle?> TryGetRawSubtitleByPathAsync(string path, CancellationToken cancellationToken = default)
+    {
+        return await _context.RawSubtitles.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+    }
+
+    public async Task UpdateRawSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
+    {
+        var file = await _context.RawSubtitles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        file.ConversionStatus = conversionStatus;
+        _context.RawSubtitles.Update(file);
+        await _context.SaveChangesAsync(cancellationToken);
+    }
+
+    public async Task UpdateRawSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
+    {
+        var file = await _context.RawSubtitles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        file.Metadata = metadata;
+        _context.RawSubtitles.Update(file);
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }
