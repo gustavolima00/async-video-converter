@@ -8,5 +8,6 @@ public static class Register
     {
         services.AddHostedService<FillFileMetadataWorker>();
         services.AddHostedService<ConvertFileWorker>();
+        services.AddHostedService<WebhookWorker>();
     }
 }

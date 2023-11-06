@@ -6,7 +6,7 @@ namespace Repositories;
 
 public interface IWebhookRepository
 {
-  Task<WebhookUser?> TryGetWebhookUserAsync(int id);
+  Task<WebhookUser?> TryGetWebhookUserAsync(Guid userUuid);
   Task<WebhookUser> CreateWebhookUserAsync(string webhookUrl);
   Task UpdateWebhookUserAsync(Guid uuid, string url, string webhookUrl);
 }
@@ -20,9 +20,9 @@ public class WebhookRepository : IWebhookRepository
     _context = context;
   }
 
-  public async Task<WebhookUser?> TryGetWebhookUserAsync(int id)
+  public async Task<WebhookUser?> TryGetWebhookUserAsync(Guid userUuid)
   {
-    return await _context.WebhookUsers.FindAsync(id);
+    return await _context.WebhookUsers.FirstOrDefaultAsync(wu => wu.Uuid == userUuid);
   }
 
   public async Task<WebhookUser> CreateWebhookUserAsync(string webhookUrl)
