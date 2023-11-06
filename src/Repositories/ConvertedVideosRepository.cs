@@ -35,9 +35,7 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
 
     public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default)
     {
-        using var transaction = _context.SupportTransaction
-            ? await _context.Database.BeginTransactionAsync(cancellationToken)
-            : null;
+        using var transaction = _context.TryBeginTransaction();
 
         try
         {
@@ -51,13 +49,13 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
             await _context.ConvertedVideos.AddAsync(webVideo, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
-            transaction?.Commit();
+            await transaction.TryCommitAsync(cancellationToken);
 
             return webVideo;
         }
         catch
         {
-            transaction?.Rollback();
+            await transaction.TryRollbackAsync(cancellationToken);
             throw;
         }
     }
