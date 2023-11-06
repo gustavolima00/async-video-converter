@@ -16,7 +16,7 @@ public class WebhookWorker : BaseQueueWorker<WebHookDetails>
         IWebhookService webhookService
     ) : base(logger, queueService)
     {
-        _queueUrl = queuesConfiguration.ConvertQueueName;
+        _queueUrl = queuesConfiguration.WebhookQueueName;
         _webhookService = webhookService;
     }
     protected override string QueueUrl => _queueUrl;
