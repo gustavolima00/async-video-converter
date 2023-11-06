@@ -42,7 +42,7 @@ public class RawVideosService : IRawVideoService
 
     public async Task<RawVideo> SaveRawVideoAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
-        var folderPath = $"{userUuid}/raw_files";
+        var folderPath = $"{userUuid}/raw_videos";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
         var rawFile = await _rawFilesRepository.CreateOrReplaceAsync(
             new RawVideo
@@ -64,7 +64,7 @@ public class RawVideosService : IRawVideoService
 
     public async Task<RawVideo> GetRawVideoAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
     {
-        string path = $"{userUuid}/raw_files/{fileName}";
+        string path = $"{userUuid}/raw_videos/{fileName}";
         var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
         return rawFile;
     }

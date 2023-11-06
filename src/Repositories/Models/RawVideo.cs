@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Repositories.Models;
 
-[Table("raw_files")]
+[Table("raw_videos")]
 public class RawVideo
 {
     [Column("id")]

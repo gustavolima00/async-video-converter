@@ -56,7 +56,7 @@ public class ConvertedVideosService : IConvertedVideosService
     public async Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {rawFileId} not found");
-        var folderPath = $"{rawFile.UserUuid}/web_videos";
+        var folderPath = $"{rawFile.UserUuid}/converted_videos";
         var fileName = $"{Path.GetFileNameWithoutExtension(rawFile.Name)}.mp4";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);
         string webVideoLink = _blobStorageClient.GetLinkFromPath(fileMetadata.Path);
