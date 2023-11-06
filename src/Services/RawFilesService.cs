@@ -23,13 +23,13 @@ public class RawFilesService : IRawFilesService
 {
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IRawFilesRepository _rawFilesRepository;
-    private readonly IVideoManagerService _videoManagerService;
+    private readonly IMediaService _videoManagerService;
     private readonly IQueueService _queueService;
 
     public RawFilesService(
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository,
-        IVideoManagerService videoManagerService,
+        IMediaService videoManagerService,
         IQueueService queueService
     )
     {
@@ -71,7 +71,7 @@ public class RawFilesService : IRawFilesService
     public async Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-        var metadata = await _videoManagerService.GetFileMetadata(rawFile.Path, cancellationToken);
+        var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
         await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
 
         return rawFile;
@@ -85,7 +85,7 @@ public class RawFilesService : IRawFilesService
     public async Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-        var mp4Stream = await _videoManagerService.ConvertRawFileToMp4(rawFile.Path, cancellationToken);
+        var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
         return mp4Stream;
     }
 }

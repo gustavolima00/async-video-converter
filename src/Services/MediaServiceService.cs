@@ -6,25 +6,25 @@ using Repositories.Models;
 
 namespace Services;
 
-public interface IVideoManagerService
+public interface IMediaService
 {
-    Task<MediaMetadata> GetFileMetadata(string path, CancellationToken cancellationToken = default);
-    Task<Stream> ConvertRawFileToMp4(string path, CancellationToken cancellationToken = default);
+    Task<MediaMetadata> GetFileMetadataAsync(string path, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertToMp4Async(string path, CancellationToken cancellationToken = default);
 }
 
-public class VideoManagerService : IVideoManagerService
+public class MediaService : IMediaService
 {
 
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IFFmpegClient _ffmpegClient;
-    public VideoManagerService(IBlobStorageClient blobStorageClient, IFFmpegClient ffmpegClient)
+    public MediaService(IBlobStorageClient blobStorageClient, IFFmpegClient ffmpegClient)
     {
         _blobStorageClient = blobStorageClient;
         _ffmpegClient = ffmpegClient;
     }
 
 
-    public async Task<MediaMetadata> GetFileMetadata(string path, CancellationToken cancellationToken = default)
+    public async Task<MediaMetadata> GetFileMetadataAsync(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var extension = Path.GetExtension(path);
@@ -32,7 +32,7 @@ public class VideoManagerService : IVideoManagerService
         return new MediaMetadata(mediaInfo);
     }
 
-    public async Task<Stream> ConvertRawFileToMp4(string path, CancellationToken cancellationToken = default)
+    public async Task<Stream> ConvertToMp4Async(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var fileExtension = Path.GetExtension(path);

@@ -20,14 +20,14 @@ public interface IWebVideoService
 public class WebVideoService : IWebVideoService
 {
     private readonly IWebVideosRepository _webVideosRepository;
-    private readonly IVideoManagerService _videoManagerService;
+    private readonly IMediaService _videoManagerService;
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IQueueService _queueService;
     private readonly IRawFilesRepository _rawFilesRepository;
 
     public WebVideoService(
         IWebVideosRepository webVideosRepository,
-        IVideoManagerService videoManagerService,
+        IMediaService videoManagerService,
         IQueueService queueService,
         IBlobStorageClient blobStorageClient,
         IRawFilesRepository rawFilesRepository
@@ -49,7 +49,7 @@ public class WebVideoService : IWebVideoService
     public async Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var webVideo = await _webVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
-        var metadata = await _videoManagerService.GetFileMetadata(webVideo.Path, cancellationToken);
+        var metadata = await _videoManagerService.GetFileMetadataAsync(webVideo.Path, cancellationToken);
         await _webVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
