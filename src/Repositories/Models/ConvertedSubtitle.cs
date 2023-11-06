@@ -6,12 +6,13 @@ namespace Repositories.Models;
 [Table("converted_subtitles")]
 public class ConvertedSubtitle
 {
-
     [Column("id")]
     public int Id { get; set; }
 
     [Column("converted_video_id")]
     public int ConvertedVideoId { get; set; }
+    [Column("raw_subtitle_id")]
+    public int RawSubtitleId { get; set; }
 
     [Column("path")]
     public string Path { get; set; } = "";
