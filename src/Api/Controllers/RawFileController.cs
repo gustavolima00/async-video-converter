@@ -4,15 +4,15 @@ using Services;
 
 namespace Api.Controllers;
 
-[Route("raw-file")]
+[Route("raw-video")]
 [ApiController]
-public class RawFileController : ControllerBase
+public class RawVideoController : ControllerBase
 {
-    private readonly IRawFilesService _fileStorageService;
+    private readonly IRawVideoService _rawFileService;
 
-    public RawFileController(IRawFilesService fileStorageService)
+    public RawVideoController(IRawVideoService fileStorageService)
     {
-        _fileStorageService = fileStorageService;
+        _rawFileService = fileStorageService;
     }
 
     [HttpPost("send-video")]
@@ -30,10 +30,38 @@ public class RawFileController : ControllerBase
             }
 
             using var stream = file.OpenReadStream();
-            var fileDetails = await _fileStorageService.SaveRawFileAsync(userUuid, stream, fileName, cancellationToken);
+            var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
         }
-        catch (RawFileServiceException e)
+        catch (RawVideoServiceException e)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Erro ao salvar arquivo.",
+                Detail = e.Message,
+            });
+        }
+    }
+
+    [HttpPost("send-subtitle")]
+    public async Task<IActionResult> SendSubtitleToConversion(
+        IFormFile file,
+        [FromQuery, Required] string fileName,
+        [FromQuery, Required] Guid userUuid,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            if (file == null || file.Length == 0)
+            {
+                return BadRequest("Arquivo não enviado ou está vazio.");
+            }
+
+            using var stream = file.OpenReadStream();
+            var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
+            return Ok(fileDetails);
+        }
+        catch (RawVideoServiceException e)
         {
             return BadRequest(new ProblemDetails
             {
@@ -57,10 +85,10 @@ public class RawFileController : ControllerBase
                 return BadRequest("Caminho do arquivo não fornecido.");
             }
 
-            var fileDetails = await _fileStorageService.GetRawFileAsync(userUuid, fileName, cancellationToken);
+            var fileDetails = await _rawFileService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
-        catch (RawFileServiceException e)
+        catch (RawVideoServiceException e)
         {
             return BadRequest(new ProblemDetails
             {

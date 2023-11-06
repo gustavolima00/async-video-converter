@@ -18,9 +18,9 @@ public class WebVideo
     [Column("link")]
     public string Link { get; set; } = "";
 
-    [Column("raw_file_id")]
+    [Column("raw_video_id")]
 
-    public int RawFileId { get; set; }
+    public int RawVideoId { get; set; }
 
     [Column("metadata")]
 

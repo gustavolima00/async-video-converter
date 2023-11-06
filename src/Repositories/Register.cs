@@ -12,7 +12,7 @@ public static class Register
         services.AddSingleton(postgresConfiguration);
         services.AddSingleton<DatabaseContext>();
         services.AddSingleton<IWebhookRepository, WebhookRepository>();
-        services.AddSingleton<IRawFilesRepository, RawFilesRepository>();
+        services.AddSingleton<IRawVideosRepository, RawVideosRepository>();
         services.AddSingleton<IWebVideosRepository, WebVideosRepository>();
         return services;
     }

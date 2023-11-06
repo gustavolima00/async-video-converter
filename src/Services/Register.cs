@@ -10,7 +10,7 @@ public static class Register
         QueuesConfiguration queuesConfiguration)
     {
         services.AddSingleton(queuesConfiguration);
-        services.AddSingleton<IRawFilesService, RawFilesService>();
+        services.AddSingleton<IRawVideoService, RawVideosService>();
         services.AddSingleton<IMediaService, MediaService>();
         services.AddSingleton<IWebVideoService, WebVideoService>();
         services.AddSingleton<IQueueService, QueueService>();

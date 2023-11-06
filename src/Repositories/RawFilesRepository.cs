@@ -4,37 +4,37 @@ using Repositories.Postgres;
 
 namespace Repositories;
 
-public interface IRawFilesRepository
+public interface IRawVideosRepository
 {
-    Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
-    Task<RawFile> CreateOrReplaceAsync(RawFile rawFile, CancellationToken cancellationToken = default);
+    Task<RawVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
+    Task<RawVideo> CreateOrReplaceAsync(RawVideo rawFile, CancellationToken cancellationToken = default);
     Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
-public class RawFilesRepository : IRawFilesRepository
+public class RawVideosRepository : IRawVideosRepository
 {
     private readonly DatabaseContext _context;
 
 
-    public RawFilesRepository(DatabaseContext context)
+    public RawVideosRepository(DatabaseContext context)
     {
         _context = context;
     }
 
 
-    public async Task<RawFile?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RawVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.RawFiles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
+        return await _context.RawVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
     }
 
-    public async Task<RawFile?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)
+    public async Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)
     {
-        return await _context.RawFiles.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+        return await _context.RawVideos.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
     }
 
-    public async Task<RawFile> CreateOrReplaceAsync(RawFile newFile, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> CreateOrReplaceAsync(RawVideo newFile, CancellationToken cancellationToken = default)
     {
         using var transaction = _context.SupportTransaction
             ? await _context.Database.BeginTransactionAsync(cancellationToken)
@@ -42,17 +42,17 @@ public class RawFilesRepository : IRawFilesRepository
 
         try
         {
-            var existingFile = await _context.RawFiles.FirstOrDefaultAsync(
+            var existingFile = await _context.RawVideos.FirstOrDefaultAsync(
                 rf => rf.Path == newFile.Path &&
                 rf.UserUuid == newFile.UserUuid,
                 cancellationToken);
 
             if (existingFile is not null)
             {
-                _context.RawFiles.Remove(existingFile);
+                _context.RawVideos.Remove(existingFile);
             }
 
-            await _context.RawFiles.AddAsync(newFile, cancellationToken);
+            await _context.RawVideos.AddAsync(newFile, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
             if (transaction is not null)
@@ -75,17 +75,17 @@ public class RawFilesRepository : IRawFilesRepository
 
     public async Task UpdateConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
     {
-        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        var file = await _context.RawVideos.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
         file.ConversionStatus = conversionStatus;
-        _context.RawFiles.Update(file);
+        _context.RawVideos.Update(file);
         await _context.SaveChangesAsync(cancellationToken);
     }
 
     public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
-        var file = await _context.RawFiles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
+        var file = await _context.RawVideos.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
         file.Metadata = metadata;
-        _context.RawFiles.Update(file);
+        _context.RawVideos.Update(file);
         await _context.SaveChangesAsync(cancellationToken);
 
     }

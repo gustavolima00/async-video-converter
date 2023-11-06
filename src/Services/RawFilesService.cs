@@ -5,31 +5,31 @@ using Services.Models;
 
 namespace Services;
 
-public class RawFileServiceException : Exception
+public class RawVideoServiceException : Exception
 {
-    public RawFileServiceException(string message) : base(message) { }
+    public RawVideoServiceException(string message) : base(message) { }
 }
 
-public interface IRawFilesService
+public interface IRawVideoService
 {
-    Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
-    Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
-    Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
-    Task<RawFile> GetRawFileAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawVideo> SaveRawVideoAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
+    Task<RawVideo> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawVideo> GetRawVideoAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
+    Task<RawVideo> GetRawVideoAsync(int id, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default);
     Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default);
 }
 
-public class RawFilesService : IRawFilesService
+public class RawVideosService : IRawVideoService
 {
     private readonly IBlobStorageClient _blobStorageClient;
-    private readonly IRawFilesRepository _rawFilesRepository;
+    private readonly IRawVideosRepository _rawFilesRepository;
     private readonly IMediaService _videoManagerService;
     private readonly IQueueService _queueService;
 
-    public RawFilesService(
+    public RawVideosService(
         IBlobStorageClient blobStorageClient,
-        IRawFilesRepository rawFilesRepository,
+        IRawVideosRepository rawFilesRepository,
         IMediaService videoManagerService,
         IQueueService queueService
     )
@@ -40,12 +40,12 @@ public class RawFilesService : IRawFilesService
         _queueService = queueService;
     }
 
-    public async Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> SaveRawVideoAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var folderPath = $"{userUuid}/raw_files";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
         var rawFile = await _rawFilesRepository.CreateOrReplaceAsync(
-            new RawFile
+            new RawVideo
             {
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
@@ -56,22 +56,22 @@ public class RawFilesService : IRawFilesService
         _queueService.EnqueueFileToFillMetadata(new()
         {
             Id = rawFile.Id,
-            FileType = FileType.RawFile
+            FileType = FileType.RawVideo
         });
         _queueService.EnqueueFileToConvert(rawFile.Id);
         return rawFile;
     }
 
-    public async Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> GetRawVideoAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
     {
         string path = $"{userUuid}/raw_files/{fileName}";
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawFileServiceException($"Raw file with path {path} not found");
+        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
         return rawFile;
     }
 
-    public async Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
         await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
 
@@ -85,14 +85,14 @@ public class RawFilesService : IRawFilesService
 
     public async Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
         return mp4Stream;
     }
 
-    public async Task<RawFile> GetRawFileAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> GetRawVideoAsync(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         return rawFile;
     }
 }

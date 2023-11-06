@@ -6,71 +6,71 @@ using Repositories.Models;
 using System;
 namespace Tests.Repositories;
 
-public class RawFilesRepositoriesTests
+public class RawVideosRepositoriesTests
 {
-    private readonly IRawFilesRepository _repository;
+    private readonly IRawVideosRepository _repository;
     private readonly DatabaseContext _context;
-    public RawFilesRepositoriesTests()
+    public RawVideosRepositoriesTests()
     {
         var postgresConfiguration = new PostgresConfiguration
         {
             UseInMemoryDatabase = true
         };
         _context = new DatabaseContext(postgresConfiguration);
-        _repository = new RawFilesRepository(_context);
+        _repository = new RawVideosRepository(_context);
     }
 
     [Fact]
-    public async Task TryGetByIdAsyncReturnsNullWhenNoRawFileWithIdExists()
+    public async Task TryGetByIdAsyncReturnsNullWhenNoRawVideoWithIdExists()
     {
         var rawFile = await _repository.TryGetByIdAsync(1);
         Assert.Null(rawFile);
     }
 
     [Fact]
-    public async Task TryGetByIdAsyncReturnsRawFileWhenRawFileWithIdExists()
+    public async Task TryGetByIdAsyncReturnsRawVideoWhenRawVideoWithIdExists()
     {
-        var rawFile = new RawFile
+        var rawFile = new RawVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             ConversionStatus = ConversionStatus.NotConverted
         };
-        _context.RawFiles.Add(rawFile);
+        _context.RawVideos.Add(rawFile);
         await _context.SaveChangesAsync();
         var rawFileFromRepository = await _repository.TryGetByIdAsync(1);
         Assert.Equal(rawFile, rawFileFromRepository);
     }
 
     [Fact]
-    public async Task TryGetByPathAsyncReturnsNullWhenNoRawFileWithPathExists()
+    public async Task TryGetByPathAsyncReturnsNullWhenNoRawVideoWithPathExists()
     {
         var rawFile = await _repository.TryGetByPathAsync("test");
         Assert.Null(rawFile);
     }
 
     [Fact]
-    public async Task TryGetByPathAsyncReturnsRawFileWhenRawFileWithPathExists()
+    public async Task TryGetByPathAsyncReturnsRawVideoWhenRawVideoWithPathExists()
     {
-        var rawFile = new RawFile
+        var rawFile = new RawVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             ConversionStatus = ConversionStatus.NotConverted
         };
-        _context.RawFiles.Add(rawFile);
+        _context.RawVideos.Add(rawFile);
         await _context.SaveChangesAsync();
         var rawFileFromRepository = await _repository.TryGetByPathAsync("test");
         Assert.Equal(rawFile, rawFileFromRepository);
     }
 
     [Fact]
-    public async Task CreateOrReplaceByPathAsyncCreatesRawFileWhenNoRawFileWithPathExists()
+    public async Task CreateOrReplaceByPathAsyncCreatesRawVideoWhenNoRawVideoWithPathExists()
     {
         var rawFile = await _repository.CreateOrReplaceAsync(
-            new RawFile
+            new RawVideo
             {
                 Path = "test",
                 UserUuid = Guid.NewGuid(),
@@ -82,19 +82,19 @@ public class RawFilesRepositoriesTests
     }
 
     [Fact]
-    public async Task CreateOrReplaceByPathAsyncReplacesRawFileWhenRawFileWithPathExists()
+    public async Task CreateOrReplaceByPathAsyncReplacesRawVideoWhenRawVideoWithPathExists()
     {
-        var rawFile = new RawFile
+        var rawFile = new RawVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             ConversionStatus = ConversionStatus.NotConverted
         };
-        _context.RawFiles.Add(rawFile);
+        _context.RawVideos.Add(rawFile);
         await _context.SaveChangesAsync();
         var rawFileFromRepository = await _repository.CreateOrReplaceAsync(
-            new RawFile
+            new RawVideo
             {
                 Path = "test",
                 UserUuid = Guid.NewGuid(),
@@ -108,16 +108,16 @@ public class RawFilesRepositoriesTests
     [Fact]
     public async Task CreateOrReplaceByPathWithDifferentUser()
     {
-        var rawFile = new RawFile
+        var rawFile = new RawVideo
         {
             Path = "test",
             ConversionStatus = ConversionStatus.NotConverted,
             UserUuid = Guid.NewGuid()
         };
-        _context.RawFiles.Add(rawFile);
+        _context.RawVideos.Add(rawFile);
         await _context.SaveChangesAsync();
         var rawFileFromRepository = await _repository.CreateOrReplaceAsync(
-            new RawFile
+            new RawVideo
             {
                 Path = "test",
                 UserUuid = Guid.NewGuid(),
@@ -131,14 +131,14 @@ public class RawFilesRepositoriesTests
     [Fact]
     public async Task UpdateConversionStatusAsyncUpdatesConversionStatus()
     {
-        var rawFile = new RawFile
+        var rawFile = new RawVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             ConversionStatus = ConversionStatus.NotConverted
         };
-        _context.RawFiles.Add(rawFile);
+        _context.RawVideos.Add(rawFile);
         await _context.SaveChangesAsync();
         await _repository.UpdateConversionStatusAsync(1, ConversionStatus.Converted);
         var rawFileFromRepository = await _repository.TryGetByIdAsync(1) ?? throw new InvalidOperationException();
@@ -146,7 +146,7 @@ public class RawFilesRepositoriesTests
     }
 
     [Fact]
-    public async Task UpdateConversionStatusAsyncThrowsWhenNoRawFileWithIdExists()
+    public async Task UpdateConversionStatusAsyncThrowsWhenNoRawVideoWithIdExists()
     {
         await Assert.ThrowsAsync<InvalidOperationException>(async () => await _repository.UpdateConversionStatusAsync(1, ConversionStatus.Converted));
     }

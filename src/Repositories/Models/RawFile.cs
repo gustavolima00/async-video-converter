@@ -4,7 +4,7 @@ using System.Text.Json.Serialization;
 namespace Repositories.Models;
 
 [Table("raw_files")]
-public class RawFile
+public class RawVideo
 {
     [Column("id")]
     public int Id { get; set; }

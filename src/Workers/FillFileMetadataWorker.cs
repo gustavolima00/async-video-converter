@@ -7,13 +7,13 @@ namespace Workers;
 
 public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 {
-    private readonly IRawFilesService _fileStorageService;
+    private readonly IRawVideoService _fileStorageService;
     private readonly IWebVideoService _webVideoService;
     private readonly string _queueName;
     public FillFileMetadataWorker(
         ILogger<FillFileMetadataWorker> logger,
         IQueueService queueService,
-        IRawFilesService fileStorageService,
+        IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
         IWebVideoService webVideoService
     ) : base(logger, queueService)
@@ -26,7 +26,7 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 
     protected override async Task ProcessMessage(FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
     {
-        if (fileToFillMetadata.FileType == FileType.RawFile)
+        if (fileToFillMetadata.FileType == FileType.RawVideo)
         {
             await _fileStorageService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
         }

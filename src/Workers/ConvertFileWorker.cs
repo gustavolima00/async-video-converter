@@ -8,14 +8,14 @@ namespace Workers;
 
 public class ConvertFileWorker : BaseQueueWorker<int>
 {
-    private readonly IRawFilesService _fileStorageService;
+    private readonly IRawVideoService _fileStorageService;
     private readonly IWebVideoService _webVideoService;
     private readonly IQueueService _queueService;
     readonly string _queueUrl;
     public ConvertFileWorker(
         ILogger<ConvertFileWorker> logger,
         IQueueService queueService,
-        IRawFilesService fileStorageService,
+        IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
         IWebVideoService webVideoService
     ) : base(logger, queueService)
@@ -30,7 +30,7 @@ public class ConvertFileWorker : BaseQueueWorker<int>
     {
         try
         {
-            var rawFile = await _fileStorageService.GetRawFileAsync(id, cancellationToken);
+            var rawFile = await _fileStorageService.GetRawVideoAsync(id, cancellationToken);
             await _fileStorageService.UpdateConversionStatus(id, ConversionStatus.Converting, cancellationToken);
             var stream = await _fileStorageService.ConvertToMp4(id, cancellationToken);
             await _webVideoService.SaveWebVideoAsync(stream, id, cancellationToken);

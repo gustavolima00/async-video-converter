@@ -5,7 +5,7 @@ namespace Repositories.Postgres;
 
 public class DatabaseContext : DbContext
 {
-  public DbSet<RawFile> RawFiles { get; set; }
+  public DbSet<RawVideo> RawVideos { get; set; }
   public DbSet<WebVideo> WebVideos { get; set; }
   public DbSet<WebVideoSubtitle> WebVideoSubtitles { get; set; }
   public DbSet<WebhookUser> WebhookUsers { get; set; }
@@ -21,11 +21,11 @@ public class DatabaseContext : DbContext
 
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
-    modelBuilder.Entity<RawFile>(entity =>
+    modelBuilder.Entity<RawVideo>(entity =>
     {
       if (_configuration.UseInMemoryDatabase)
       {
-        modelBuilder.Entity<RawFile>().Ignore(rf => rf.Metadata);
+        modelBuilder.Entity<RawVideo>().Ignore(rf => rf.Metadata);
       }
       else
       {
