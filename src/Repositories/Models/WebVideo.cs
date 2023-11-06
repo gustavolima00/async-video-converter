@@ -4,7 +4,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace Repositories.Models;
 
 [Table("web_videos")]
-public class WebVideo
+public class ConvertedVideo
 {
     [Column("id")]
     public int Id { get; set; }
@@ -26,18 +26,17 @@ public class WebVideo
 
     public MediaMetadata? Metadata { get; set; }
 
-    public ICollection<WebVideoSubtitle> Subtitles { get; set; } = new List<WebVideoSubtitle>();
+    public ICollection<ConvertedSubtitle> Subtitles { get; set; } = new List<ConvertedSubtitle>();
 }
 
-
-public class WebVideoSubtitle
+public class ConvertedSubtitle
 {
 
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("web_video_id")]
-    public int WebVideoId { get; set; }
+    [Column("converted_video_id")]
+    public int ConvertedVideoId { get; set; }
 
     [Column("path")]
     public string Path { get; set; } = "";

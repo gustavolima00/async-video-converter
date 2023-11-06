@@ -8,14 +8,14 @@ namespace Workers;
 public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 {
     private readonly IRawVideoService _fileStorageService;
-    private readonly IWebVideoService _webVideoService;
+    private readonly IConvertedVideosService _webVideoService;
     private readonly string _queueName;
     public FillFileMetadataWorker(
         ILogger<FillFileMetadataWorker> logger,
         IQueueService queueService,
         IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
-        IWebVideoService webVideoService
+        IConvertedVideosService webVideoService
     ) : base(logger, queueService)
     {
         _fileStorageService = fileStorageService;
@@ -30,7 +30,7 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
         {
             await _fileStorageService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
         }
-        else if(fileToFillMetadata.FileType == FileType.WebVideo)
+        else if(fileToFillMetadata.FileType == FileType.ConvertedVideo)
         {
             await _webVideoService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
         }

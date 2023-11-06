@@ -13,7 +13,7 @@ public static class Register
         services.AddSingleton<DatabaseContext>();
         services.AddSingleton<IWebhookRepository, WebhookRepository>();
         services.AddSingleton<IRawVideosRepository, RawVideosRepository>();
-        services.AddSingleton<IWebVideosRepository, WebVideosRepository>();
+        services.AddSingleton<IConvertedVideosRepository, ConvertedVideosRepository>();
         return services;
     }
 }

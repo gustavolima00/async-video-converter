@@ -6,79 +6,79 @@ using Repositories.Models;
 using System;
 namespace Tests.Repositories;
 
-public class WebVideosRepositoriesTests
+public class ConvertedVideosRepositoriesTests
 {
-    private readonly IWebVideosRepository _repository;
+    private readonly IConvertedVideosRepository _repository;
     private readonly DatabaseContext _context;
-    public WebVideosRepositoriesTests()
+    public ConvertedVideosRepositoriesTests()
     {
         var postgresConfiguration = new PostgresConfiguration
         {
             UseInMemoryDatabase = true
         };
         _context = new DatabaseContext(postgresConfiguration);
-        _repository = new WebVideosRepository(_context);
+        _repository = new ConvertedVideosRepository(_context);
     }
 
 
     [Fact]
-    public async Task TryGetByIdAsyncReturnsNullWhenNoWebVideoWithIdExists()
+    public async Task TryGetByIdAsyncReturnsNullWhenNoConvertedVideoWithIdExists()
     {
         var webVideo = await _repository.TryGetByIdAsync(1);
         Assert.Null(webVideo);
     }
 
     [Fact]
-    public async Task TryGetByIdAsyncReturnsWebVideoWhenWebVideoWithIdExists()
+    public async Task TryGetByIdAsyncReturnsConvertedVideoWhenConvertedVideoWithIdExists()
     {
-        var webVideo = new WebVideo
+        var webVideo = new ConvertedVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             Link = "test",
         };
-        _context.WebVideos.Add(webVideo);
+        _context.ConvertedVideos.Add(webVideo);
         await _context.SaveChangesAsync();
         var webVideoFromRepository = await _repository.TryGetByIdAsync(1);
         Assert.Equal(webVideo, webVideoFromRepository);
     }
 
     [Fact]
-    public async Task GetAllAsyncReturnsEmptyListWhenNoWebVideosExist()
+    public async Task GetAllAsyncReturnsEmptyListWhenNoConvertedVideosExist()
     {
         var webVideos = await _repository.GetAllAsync();
         Assert.Empty(webVideos);
     }
 
     [Fact]
-    public async Task GetAllAsyncReturnsAllWebVideos()
+    public async Task GetAllAsyncReturnsAllConvertedVideos()
     {
-        var webVideo1 = new WebVideo
+        var webVideo1 = new ConvertedVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             Link = "test",
         };
-        var webVideo2 = new WebVideo
+        var webVideo2 = new ConvertedVideo
         {
             Id = 2,
             Name = "test",
             Path = "test",
             Link = "test",
         };
-        _context.WebVideos.Add(webVideo1);
-        _context.WebVideos.Add(webVideo2);
+        _context.ConvertedVideos.Add(webVideo1);
+        _context.ConvertedVideos.Add(webVideo2);
         await _context.SaveChangesAsync();
         var webVideosFromRepository = await _repository.GetAllAsync();
         Assert.Equal(new[] { webVideo1, webVideo2 }, webVideosFromRepository);
     }
 
     [Fact]
-    public async Task CreateOrReplaceAsyncCreatesWebVideoWhenNoWebVideoWithPathExists()
+    public async Task CreateOrReplaceAsyncCreatesConvertedVideoWhenNoConvertedVideoWithPathExists()
     {
-        var webVideo = new WebVideo
+        var webVideo = new ConvertedVideo
         {
             Id = 1,
             Name = "test",
@@ -90,50 +90,50 @@ public class WebVideosRepositoriesTests
     }
 
     [Fact]
-    public async Task CreateOrReplaceAsyncReplacesWebVideoWhenWebVideoWithPathExists()
+    public async Task CreateOrReplaceAsyncReplacesConvertedVideoWhenConvertedVideoWithPathExists()
     {
-        var webVideo = new WebVideo
+        var webVideo = new ConvertedVideo
         {
             Name = "test",
             Path = "test",
             Link = "test",
         };
-        _context.WebVideos.Add(webVideo);
+        _context.ConvertedVideos.Add(webVideo);
         await _context.SaveChangesAsync();
 
-        var newWebVideo = new WebVideo
+        var newConvertedVideo = new ConvertedVideo
         {
             Name = "test_updated",
             Path = "test",
             Link = "test_updated",
         };
 
-        var webVideoFromRepository = await _repository.CreateOrReplaceAsync(newWebVideo);
+        var webVideoFromRepository = await _repository.CreateOrReplaceAsync(newConvertedVideo);
         Assert.NotEqual(webVideo.Id, webVideoFromRepository.Id); // Os Ids devem ser diferentes
         Assert.Equal("test_updated", webVideoFromRepository.Name);
     }
 
 
     [Fact]
-    public async Task GetWebVideoReturnsSubtitles()
+    public async Task GetConvertedVideoReturnsSubtitles()
     {
-        var webVideo = new WebVideo
+        var webVideo = new ConvertedVideo
         {
             Id = 1,
             Name = "test",
             Path = "test",
             Link = "test",
         };
-        var subtitle = new WebVideoSubtitle
+        var subtitle = new ConvertedSubtitle
         {
             Id = 1,
-            WebVideoId = 1,
+            ConvertedVideoId = 1,
             Path = "test",
             Language = "test",
             Link = "test",
         };
-        _context.WebVideos.Add(webVideo);
-        _context.WebVideoSubtitles.Add(subtitle);
+        _context.ConvertedVideos.Add(webVideo);
+        _context.ConvertedSubtitles.Add(subtitle);
         await _context.SaveChangesAsync();
         var webVideoFromRepository = await _repository.TryGetByIdAsync(1);
         Assert.Equal(webVideo, webVideoFromRepository);

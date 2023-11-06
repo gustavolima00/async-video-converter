@@ -3,9 +3,9 @@ using Repositories.Postgres;
 
 namespace Tests.MockHelper;
 
-public class MockWebVideosRepository : WebVideosRepository, IWebVideosRepository
+public class MockConvertedVideosRepository : ConvertedVideosRepository, IConvertedVideosRepository
 {
-  public MockWebVideosRepository() : base(new DatabaseContext(new PostgresConfiguration { UseInMemoryDatabase = true }))
+  public MockConvertedVideosRepository() : base(new DatabaseContext(new PostgresConfiguration { UseInMemoryDatabase = true }))
   {
   }
 }

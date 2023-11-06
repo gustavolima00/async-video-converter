@@ -6,8 +6,8 @@ namespace Repositories.Postgres;
 public class DatabaseContext : DbContext
 {
   public DbSet<RawVideo> RawVideos { get; set; }
-  public DbSet<WebVideo> WebVideos { get; set; }
-  public DbSet<WebVideoSubtitle> WebVideoSubtitles { get; set; }
+  public DbSet<ConvertedVideo> ConvertedVideos { get; set; }
+  public DbSet<ConvertedSubtitle> ConvertedSubtitles { get; set; }
   public DbSet<WebhookUser> WebhookUsers { get; set; }
 
   private readonly PostgresConfiguration _configuration;
@@ -34,11 +34,11 @@ public class DatabaseContext : DbContext
       }
     });
 
-    modelBuilder.Entity<WebVideo>(entity =>
+    modelBuilder.Entity<ConvertedVideo>(entity =>
     {
       if (_configuration.UseInMemoryDatabase)
       {
-        modelBuilder.Entity<WebVideo>().Ignore(wv => wv.Metadata);
+        modelBuilder.Entity<ConvertedVideo>().Ignore(wv => wv.Metadata);
       }
       else
       {
@@ -48,11 +48,11 @@ public class DatabaseContext : DbContext
 
     });
 
-    modelBuilder.Entity<WebVideoSubtitle>(entity =>
+    modelBuilder.Entity<ConvertedSubtitle>(entity =>
     {
       if (_configuration.UseInMemoryDatabase)
       {
-        modelBuilder.Entity<WebVideoSubtitle>().Ignore(wvs => wvs.Metadata);
+        modelBuilder.Entity<ConvertedSubtitle>().Ignore(wvs => wvs.Metadata);
       }
       else
       {

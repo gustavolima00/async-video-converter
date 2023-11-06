@@ -3,26 +3,26 @@ using Services;
 
 namespace Api.Controllers;
 
-[Route("web-videos")]
+[Route("converted-videos")]
 [ApiController]
-public class WebVideoController : ControllerBase
+public class ConvertedVideoController : ControllerBase
 {
-    private readonly IWebVideoService _webVideoService;
+    private readonly IConvertedVideosService _webVideoService;
 
-    public WebVideoController(IWebVideoService webVideoService)
+    public ConvertedVideoController(IConvertedVideosService webVideoService)
     {
         _webVideoService = webVideoService;
     }
 
     [HttpGet("")]
-    public async Task<IActionResult> ListWebVideos(CancellationToken cancellationToken)
+    public async Task<IActionResult> ListConvertedVideos(CancellationToken cancellationToken)
     {
         try
         {
-            var result = await _webVideoService.ListWebVideosAsync(cancellationToken);
+            var result = await _webVideoService.ListConvertedVideosAsync(cancellationToken);
             return Ok(result);
         }
-        catch (WebVideoServiceException e)
+        catch (ConvertedVideoServiceException e)
         {
             return BadRequest(new ProblemDetails
             {

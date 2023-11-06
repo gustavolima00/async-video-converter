@@ -4,36 +4,36 @@ using Repositories.Postgres;
 
 namespace Repositories;
 
-public interface IWebVideosRepository
+public interface IConvertedVideosRepository
 {
-    Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default);
+    Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default);
     Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
-    Task<WebVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
 }
 
-public class WebVideosRepository : IWebVideosRepository
+public class ConvertedVideosRepository : IConvertedVideosRepository
 {
     private readonly DatabaseContext _context;
 
 
-    public WebVideosRepository(DatabaseContext context)
+    public ConvertedVideosRepository(DatabaseContext context)
     {
         _context = context;
     }
 
 
-    public async Task<WebVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.WebVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
+        return await _context.ConvertedVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
     }
 
-    public async Task<IEnumerable<WebVideo>> GetAllAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.WebVideos.ToListAsync(cancellationToken);
+        return await _context.ConvertedVideos.ToListAsync(cancellationToken);
     }
 
-    public async Task<WebVideo> CreateOrReplaceAsync(WebVideo webVideo, CancellationToken cancellationToken = default)
+    public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default)
     {
         using var transaction = _context.SupportTransaction
             ? await _context.Database.BeginTransactionAsync(cancellationToken)
@@ -41,14 +41,14 @@ public class WebVideosRepository : IWebVideosRepository
 
         try
         {
-            var existingFile = await _context.WebVideos.SingleOrDefaultAsync(rf => rf.Path == webVideo.Path, cancellationToken);
+            var existingFile = await _context.ConvertedVideos.SingleOrDefaultAsync(rf => rf.Path == webVideo.Path, cancellationToken);
 
             if (existingFile is not null)
             {
-                _context.WebVideos.Remove(existingFile);
+                _context.ConvertedVideos.Remove(existingFile);
             }
 
-            await _context.WebVideos.AddAsync(webVideo, cancellationToken);
+            await _context.ConvertedVideos.AddAsync(webVideo, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
             transaction?.Commit();
@@ -64,7 +64,7 @@ public class WebVideosRepository : IWebVideosRepository
 
     public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
-        var webVideo = await _context.WebVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No web video with id {id} exists");
+        var webVideo = await _context.ConvertedVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No web video with id {id} exists");
         webVideo.Metadata = metadata;
         await _context.SaveChangesAsync(cancellationToken);
     }

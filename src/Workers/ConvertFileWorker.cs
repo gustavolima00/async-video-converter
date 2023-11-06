@@ -9,7 +9,7 @@ namespace Workers;
 public class ConvertFileWorker : BaseQueueWorker<int>
 {
     private readonly IRawVideoService _fileStorageService;
-    private readonly IWebVideoService _webVideoService;
+    private readonly IConvertedVideosService _webVideoService;
     private readonly IQueueService _queueService;
     readonly string _queueUrl;
     public ConvertFileWorker(
@@ -17,7 +17,7 @@ public class ConvertFileWorker : BaseQueueWorker<int>
         IQueueService queueService,
         IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
-        IWebVideoService webVideoService
+        IConvertedVideosService webVideoService
     ) : base(logger, queueService)
     {
         _fileStorageService = fileStorageService;
@@ -33,7 +33,7 @@ public class ConvertFileWorker : BaseQueueWorker<int>
             var rawFile = await _fileStorageService.GetRawVideoAsync(id, cancellationToken);
             await _fileStorageService.UpdateConversionStatus(id, ConversionStatus.Converting, cancellationToken);
             var stream = await _fileStorageService.ConvertToMp4(id, cancellationToken);
-            await _webVideoService.SaveWebVideoAsync(stream, id, cancellationToken);
+            await _webVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
             await _fileStorageService.UpdateConversionStatus(id, ConversionStatus.Converted, cancellationToken);
             _queueService.EnqueueWebhook(new()
             {

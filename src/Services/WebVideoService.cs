@@ -5,28 +5,28 @@ using Services.Models;
 
 namespace Services;
 
-public class WebVideoServiceException : Exception
+public class ConvertedVideoServiceException : Exception
 {
-    public WebVideoServiceException(string message) : base(message) { }
+    public ConvertedVideoServiceException(string message) : base(message) { }
 }
 
-public interface IWebVideoService
+public interface IConvertedVideosService
 {
     Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
-    Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default);
-    Task SaveWebVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default);
+    Task<IEnumerable<ConvertedVideo>> ListConvertedVideosAsync(CancellationToken cancellationToken = default);
+    Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default);
 }
 
-public class WebVideoService : IWebVideoService
+public class ConvertedVideosService : IConvertedVideosService
 {
-    private readonly IWebVideosRepository _webVideosRepository;
+    private readonly IConvertedVideosRepository _webVideosRepository;
     private readonly IMediaService _videoManagerService;
     private readonly IBlobStorageClient _blobStorageClient;
     private readonly IQueueService _queueService;
     private readonly IRawVideosRepository _rawFilesRepository;
 
-    public WebVideoService(
-        IWebVideosRepository webVideosRepository,
+    public ConvertedVideosService(
+        IConvertedVideosRepository webVideosRepository,
         IMediaService videoManagerService,
         IQueueService queueService,
         IBlobStorageClient blobStorageClient,
@@ -40,7 +40,7 @@ public class WebVideoService : IWebVideoService
         _rawFilesRepository = rawFilesRepository;
     }
 
-    public async Task<IEnumerable<WebVideo>> ListWebVideosAsync(CancellationToken cancellationToken = default)
+    public async Task<IEnumerable<ConvertedVideo>> ListConvertedVideosAsync(CancellationToken cancellationToken = default)
     {
         var webVideos = await _webVideosRepository.GetAllAsync(cancellationToken);
         return webVideos;
@@ -53,7 +53,7 @@ public class WebVideoService : IWebVideoService
         await _webVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
-    public async Task SaveWebVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
+    public async Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {rawFileId} not found");
         var folderPath = $"{rawFile.UserUuid}/web_videos";
@@ -71,7 +71,7 @@ public class WebVideoService : IWebVideoService
         _queueService.EnqueueFileToFillMetadata(new()
         {
             Id = webVideo.Id,
-            FileType = FileType.WebVideo
+            FileType = FileType.ConvertedVideo
         });
     }
 }

@@ -13,6 +13,6 @@ public class FileToFillMetadata
 public enum FileType
 {
   RawVideo,
-  WebVideo,
+  ConvertedVideo,
   Subtitle
 }
