@@ -4,7 +4,7 @@ using Services;
 
 namespace Api.Controllers;
 
-[Route("raw-video")]
+[Route("raw-videos")]
 [ApiController]
 public class RawVideoController : ControllerBase
 {

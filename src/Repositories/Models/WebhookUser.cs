@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repositories.Models;
 
-[Table("webhook_user")]
+[Table("webhook_users")]
 public class WebhookUser
 {
     [Column("id")]
