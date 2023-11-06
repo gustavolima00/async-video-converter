@@ -8,6 +8,7 @@ public interface IQueueService
 {
     void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata);
     void EnqueueFileToConvert(int id);
+    void EnqueueWebhook(WebHookDetails webhookDetails);
     void EnqueueMessage<T>(string queueName, T message);
     IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
     void DeleteMessage(ulong messageId);
@@ -36,6 +37,11 @@ public class QueueService : IQueueService
     public void EnqueueFileToConvert(int id)
     {
         EnqueueMessage(_queuesConfiguration.ConvertQueueName, id);
+    }
+
+    public void EnqueueWebhook(WebHookDetails webhookDetails)
+    {
+        EnqueueMessage(_queuesConfiguration.WebhookQueueName, webhookDetails);
     }
 
     public IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)
