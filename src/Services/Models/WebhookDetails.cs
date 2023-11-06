@@ -13,6 +13,6 @@ public class WebHookDetails
 
 public enum WebhookType
 {
-  VideoConversion,
-  SubtitleConversion
+  VideoConversionFinished,
+  SubtitleConversionFinished,
 }

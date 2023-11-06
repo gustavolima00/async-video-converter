@@ -15,6 +15,7 @@ public interface IRawFilesService
     Task<RawFile> SaveRawFileAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
     Task<RawFile> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<RawFile> GetRawFileAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
+    Task<RawFile> GetRawFileAsync(int id, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default);
     Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default);
 }
@@ -87,5 +88,11 @@ public class RawFilesService : IRawFilesService
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
         var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
         return mp4Stream;
+    }
+
+    public async Task<RawFile> GetRawFileAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawFileServiceException($"Raw file with id {id} not found");
+        return rawFile;
     }
 }
