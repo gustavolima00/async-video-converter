@@ -5,11 +5,11 @@ namespace Api.Controllers;
 
 [Route("converted-videos")]
 [ApiController]
-public class ConvertedVideoController : ControllerBase
+public class ConvertedVideosController : ControllerBase
 {
     private readonly IConvertedVideosService _webVideoService;
 
-    public ConvertedVideoController(IConvertedVideosService webVideoService)
+    public ConvertedVideosController(IConvertedVideosService webVideoService)
     {
         _webVideoService = webVideoService;
     }
