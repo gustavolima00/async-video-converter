@@ -15,10 +15,10 @@ public interface IRawVideosRepository
 
     // Subtitles
     Task<RawSubtitle> CreateOrReplaceRawSubtitleAsync(RawSubtitle rawSubtitle, CancellationToken cancellationToken = default);
-    Task<RawSubtitle?> TryGetRawSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<RawSubtitle?> TryGetRawSubtitleByPathAsync(string path, CancellationToken cancellationToken = default);
-    Task UpdateRawSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
-    Task UpdateRawSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
+    Task<RawSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<RawSubtitle?> TryGetSubtitleByPathAsync(string path, CancellationToken cancellationToken = default);
+    Task UpdateSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default);
+    Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
 public class RawVideosRepository : IRawVideosRepository
@@ -119,17 +119,17 @@ public class RawVideosRepository : IRawVideosRepository
         }
     }
 
-    public async Task<RawSubtitle?> TryGetRawSubtitleByIdAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RawSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.RawSubtitles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
     }
 
-    public async Task<RawSubtitle?> TryGetRawSubtitleByPathAsync(string path, CancellationToken cancellationToken = default)
+    public async Task<RawSubtitle?> TryGetSubtitleByPathAsync(string path, CancellationToken cancellationToken = default)
     {
         return await _context.RawSubtitles.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
     }
 
-    public async Task UpdateRawSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
+    public async Task UpdateSubtitleConversionStatusAsync(int id, ConversionStatus conversionStatus, CancellationToken cancellationToken = default)
     {
         var file = await _context.RawSubtitles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
         file.ConversionStatus = conversionStatus;
@@ -137,7 +137,7 @@ public class RawVideosRepository : IRawVideosRepository
         await _context.SaveChangesAsync(cancellationToken);
     }
 
-    public async Task UpdateRawSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
+    public async Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
     {
         var file = await _context.RawSubtitles.FindAsync(new object[] { id }, cancellationToken) ?? throw new InvalidOperationException($"Raw file with id {id} not found");
         file.Metadata = metadata;
