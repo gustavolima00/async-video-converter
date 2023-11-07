@@ -148,7 +148,8 @@ public class RawVideosService : IRawVideoService
             {
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
-                RawVideoId = rawVideo.Id
+                RawVideoId = rawVideo.Id,
+                UserUuid = userUuid
             }
             , cancellationToken);
         _queueService.EnqueueFileToFillMetadata(new()

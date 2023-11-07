@@ -47,9 +47,6 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
                 await Task.Delay(DelayAfterError, cancellationToken);
                 continue;
             }
-
-
-
         }
     }
 

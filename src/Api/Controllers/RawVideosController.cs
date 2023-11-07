@@ -6,11 +6,11 @@ namespace Api.Controllers;
 
 [Route("raw-videos")]
 [ApiController]
-public class RawVideoController : ControllerBase
+public class RawVideosController : ControllerBase
 {
     private readonly IRawVideoService _rawFileService;
 
-    public RawVideoController(IRawVideoService fileStorageService)
+    public RawVideosController(IRawVideoService fileStorageService)
     {
         _rawFileService = fileStorageService;
     }
@@ -37,7 +37,7 @@ public class RawVideoController : ControllerBase
         {
             return BadRequest(new ProblemDetails
             {
-                Title = "Erro ao salvar arquivo.",
+                Title = "Erro ao salvar vídeo.",
                 Detail = e.Message,
             });
         }
@@ -47,6 +47,7 @@ public class RawVideoController : ControllerBase
     public async Task<IActionResult> SendSubtitleToConversion(
         IFormFile file,
         [FromQuery, Required] string fileName,
+        [FromQuery, Required] string rawVideoName,
         [FromQuery, Required] Guid userUuid,
         CancellationToken cancellationToken)
     {
@@ -58,14 +59,14 @@ public class RawVideoController : ControllerBase
             }
 
             using var stream = file.OpenReadStream();
-            var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
-            return Ok(fileDetails);
+            var rawVideo = await _rawFileService.SaveRawSubtitleAsync(userUuid, stream, fileName, rawVideoName, cancellationToken);
+            return Ok(rawVideo);
         }
         catch (RawVideoServiceException e)
         {
             return BadRequest(new ProblemDetails
             {
-                Title = "Erro ao salvar arquivo.",
+                Title = "Erro ao salvar legenda.",
                 Detail = e.Message,
             });
         }
