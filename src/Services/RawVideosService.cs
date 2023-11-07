@@ -12,12 +12,49 @@ public class RawVideoServiceException : Exception
 
 public interface IRawVideoService
 {
-    Task<RawVideo> SaveRawVideoAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default);
-    Task<RawVideo> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
-    Task<RawVideo> GetRawVideoAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default);
-    Task<RawVideo> GetRawVideoAsync(int id, CancellationToken cancellationToken = default);
-    Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default);
-    Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default);
+    // Raw Videos
+    Task<RawVideo> SaveRawVideoAsync(
+        Guid userUuid,
+        Stream fileStream,
+        string fileName,
+        CancellationToken cancellationToken = default
+    );
+    Task FillFileRawVideoMetadataAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    );
+    Task<RawVideo> GetRawVideoAsync(
+        Guid userUuid,
+        string fileName,
+        CancellationToken cancellationToken = default
+    );
+    Task<RawVideo> GetRawVideoAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    );
+    Task<Stream> ConvertRawVideoToMp4Async(
+        int id,
+        CancellationToken cancellationToken = default
+    );
+    Task UpdateRawVideoConversionStatus(
+        int id, ConversionStatus status,
+        CancellationToken cancellationToken = default
+    );
+
+    // Raw Subtitles
+    Task<RawVideo> SaveRawSubtitleAsync(
+        Guid userUuid,
+        Stream fileStream,
+        string fileName,
+        string rawVideoName,
+        CancellationToken cancellationToken = default
+    );
+
+    Task FillRawSubtitleMetadataAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    );
+
 }
 
 public class RawVideosService : IRawVideoService
@@ -69,21 +106,19 @@ public class RawVideosService : IRawVideoService
         return rawFile;
     }
 
-    public async Task<RawVideo> FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
+    public async Task FillFileRawVideoMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
         await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
-
-        return rawFile;
     }
 
-    public async Task UpdateConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default)
+    public async Task UpdateRawVideoConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
         await _rawFilesRepository.UpdateConversionStatusAsync(id, status, cancellationToken);
     }
 
-    public async Task<Stream> ConvertToMp4(int id, CancellationToken cancellationToken = default)
+    public async Task<Stream> ConvertRawVideoToMp4Async(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
@@ -94,5 +129,40 @@ public class RawVideosService : IRawVideoService
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         return rawFile;
+    }
+
+    public async Task<RawVideo> SaveRawSubtitleAsync(
+        Guid userUuid,
+        Stream fileStream,
+        string fileName,
+        string rawVideoName,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var rawVideoPath = $"{userUuid}/raw_videos/{rawVideoName}";
+        var rawVideo = await _rawFilesRepository.TryGetByPathAsync(rawVideoPath, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {rawVideoPath} not found");
+        var folderPath = $"{userUuid}/raw_subtitles";
+        var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
+        var rawSubtitle = await _rawFilesRepository.CreateOrReplaceRawSubtitleAsync(
+            new RawSubtitle
+            {
+                Name = fileMetadata.Name,
+                Path = fileMetadata.Path,
+                RawVideoId = rawVideo.Id
+            }
+            , cancellationToken);
+        _queueService.EnqueueFileToFillMetadata(new()
+        {
+            Id = rawSubtitle.Id,
+            FileType = FileType.RawSubtitle
+        });
+        return await GetRawVideoAsync(rawVideo.Id, cancellationToken);
+    }
+
+    public async Task FillRawSubtitleMetadataAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var rawSubtitle = await _rawFilesRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw subtitle with id {id} not found");
+        var metadata = await _videoManagerService.GetFileMetadataAsync(rawSubtitle.Path, cancellationToken);
+        await _rawFilesRepository.UpdateSubtitleMetadataAsync(id, metadata, cancellationToken);
     }
 }

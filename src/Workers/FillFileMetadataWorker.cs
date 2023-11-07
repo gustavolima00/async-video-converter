@@ -24,19 +24,14 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
     }
     protected override string QueueUrl => _queueName;
 
-    protected override async Task ProcessMessage(FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
+    protected override Task ProcessMessage(FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
     {
-        if (fileToFillMetadata.FileType == FileType.RawVideo)
+        return fileToFillMetadata.FileType switch
         {
-            await _fileStorageService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
-        }
-        else if(fileToFillMetadata.FileType == FileType.ConvertedVideo)
-        {
-            await _webVideoService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken);
-        }
-        else
-        {
-            throw new NotImplementedException();
-        }
+            FileType.RawVideo => _fileStorageService.FillFileRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawSubtitle => _fileStorageService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.ConvertedVideo => _webVideoService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            _ => throw new NotImplementedException(),
+        };
     }
 }
