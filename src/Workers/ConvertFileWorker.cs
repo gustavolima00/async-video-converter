@@ -8,8 +8,8 @@ namespace Workers;
 
 public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 {
-    private readonly IRawVideoService _fileStorageService;
-    private readonly IConvertedVideosService _webVideoService;
+    private readonly IRawVideoService _rawVideoService;
+    private readonly IConvertedVideosService _convertedVideoService;
     private readonly IQueueService _queueService;
     readonly string _queueUrl;
     public ConvertFileWorker(
@@ -20,9 +20,9 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         IConvertedVideosService webVideoService
     ) : base(logger, queueService)
     {
-        _fileStorageService = fileStorageService;
+        _rawVideoService = fileStorageService;
         _queueUrl = queuesConfiguration.ConvertQueueName;
-        _webVideoService = webVideoService;
+        _convertedVideoService = webVideoService;
         _queueService = queueService;
     }
     protected override string QueueUrl => _queueUrl;
@@ -32,6 +32,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         return fileToConvert.FileType switch
         {
             FileType.RawVideo => ConvertRawVideoAsync(fileToConvert.Id, cancellationToken),
+            FileType.RawSubtitle => ConvertRawSubtitleAsync(fileToConvert.Id, cancellationToken),
             _ => throw new NotImplementedException()
         };
     }
@@ -40,11 +41,11 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     {
         try
         {
-            var rawFile = await _fileStorageService.GetRawVideoAsync(id, cancellationToken);
-            await _fileStorageService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converting, cancellationToken);
-            var stream = await _fileStorageService.ConvertRawVideoToMp4Async(id, cancellationToken);
-            await _webVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
-            await _fileStorageService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            var rawFile = await _rawVideoService.GetRawVideoAsync(id, cancellationToken);
+            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await _rawVideoService.ConvertRawVideoToMp4Async(id, cancellationToken);
+            await _convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
+            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
             _queueService.EnqueueWebhook(new()
             {
                 UserUuid = rawFile.UserUuid,
@@ -53,7 +54,29 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
         catch
         {
-            await _fileStorageService.UpdateRawVideoConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            throw;
+        }
+    }
+
+    private async Task ConvertRawSubtitleAsync(int id, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var rawSubtitle = await _rawVideoService.GetRawSubtitleAsync(id, cancellationToken);
+            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await _rawVideoService.ConvertRawSubtitleToVttAsync(id, cancellationToken);
+            await _convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
+            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            _queueService.EnqueueWebhook(new()
+            {
+                UserUuid = rawSubtitle.UserUuid,
+                WebhookType = WebhookType.SubtitleConversionFinished,
+            });
+        }
+        catch
+        {
+            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Error, cancellationToken);
             throw;
         }
     }
