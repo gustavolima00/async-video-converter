@@ -7,7 +7,7 @@ namespace Services;
 public interface IQueueService
 {
     void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata);
-    void EnqueueFileToConvert(int id);
+    void EnqueueFileToConvert(FileToConvert fileToConvert);
     void EnqueueWebhook(WebHookDetails webhookDetails);
     void EnqueueMessage<T>(string queueName, T message);
     IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
@@ -34,9 +34,9 @@ public class QueueService : IQueueService
         EnqueueMessage(_queuesConfiguration.FillMetadataQueueName, fileToFillMetadata);
     }
 
-    public void EnqueueFileToConvert(int id)
+    public void EnqueueFileToConvert(FileToConvert fileToConvert)
     {
-        EnqueueMessage(_queuesConfiguration.ConvertQueueName, id);
+        EnqueueMessage(_queuesConfiguration.ConvertQueueName, fileToConvert);
     }
 
     public void EnqueueWebhook(WebHookDetails webhookDetails)

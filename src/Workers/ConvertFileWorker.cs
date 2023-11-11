@@ -6,7 +6,7 @@ using Services.Models;
 
 namespace Workers;
 
-public class ConvertFileWorker : BaseQueueWorker<int>
+public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 {
     private readonly IRawVideoService _fileStorageService;
     private readonly IConvertedVideosService _webVideoService;
@@ -26,7 +26,17 @@ public class ConvertFileWorker : BaseQueueWorker<int>
         _queueService = queueService;
     }
     protected override string QueueUrl => _queueUrl;
-    protected override async Task ProcessMessage(int id, CancellationToken cancellationToken)
+    protected override Task ProcessMessage(FileToConvert fileToConvert, CancellationToken cancellationToken)
+    {
+
+        return fileToConvert.FileType switch
+        {
+            FileType.RawVideo => ConvertRawVideoAsync(fileToConvert.Id, cancellationToken),
+            _ => throw new NotImplementedException()
+        };
+    }
+
+    private async Task ConvertRawVideoAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {

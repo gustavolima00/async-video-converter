@@ -99,7 +99,11 @@ public class RawVideosService : IRawVideoService
             Id = rawFile.Id,
             FileType = FileType.RawVideo
         });
-        _queueService.EnqueueFileToConvert(rawFile.Id);
+        _queueService.EnqueueFileToConvert(new()
+        {
+            Id = rawFile.Id,
+            FileType = FileType.RawVideo
+        });
         return rawFile;
     }
 
@@ -157,6 +161,11 @@ public class RawVideosService : IRawVideoService
             }
             , cancellationToken);
         _queueService.EnqueueFileToFillMetadata(new()
+        {
+            Id = rawSubtitle.Id,
+            FileType = FileType.RawSubtitle
+        });
+        _queueService.EnqueueFileToConvert(new()
         {
             Id = rawSubtitle.Id,
             FileType = FileType.RawSubtitle
