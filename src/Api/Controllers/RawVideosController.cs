@@ -17,18 +17,13 @@ public class RawVideosController : ControllerBase
 
     [HttpPost("send-video")]
     public async Task<IActionResult> SendVideoToConversion(
-        IFormFile file,
+        [Required] IFormFile file,
         [FromQuery, Required] string fileName,
         [FromQuery, Required] Guid userUuid,
         CancellationToken cancellationToken)
     {
         try
         {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("Arquivo não enviado ou está vazio.");
-            }
-
             using var stream = file.OpenReadStream();
             var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
@@ -45,7 +40,7 @@ public class RawVideosController : ControllerBase
 
     [HttpPost("send-subtitle")]
     public async Task<IActionResult> SendSubtitleToConversion(
-        IFormFile file,
+        [Required] IFormFile file,
         [FromQuery, Required] string fileName,
         [FromQuery, Required] string rawVideoName,
         [FromQuery, Required] Guid userUuid,
@@ -81,11 +76,6 @@ public class RawVideosController : ControllerBase
     {
         try
         {
-            if (string.IsNullOrEmpty(fileName))
-            {
-                return BadRequest("Caminho do arquivo não fornecido.");
-            }
-
             var fileDetails = await _rawFileService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
