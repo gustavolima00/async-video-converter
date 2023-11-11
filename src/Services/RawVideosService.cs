@@ -19,7 +19,7 @@ public interface IRawVideoService
         string fileName,
         CancellationToken cancellationToken = default
     );
-    Task FillFileRawVideoMetadataAsync(
+    Task FillRawVideoMetadataAsync(
         int id,
         CancellationToken cancellationToken = default
     );
@@ -124,7 +124,7 @@ public class RawVideosService : IRawVideoService
         return rawFile;
     }
 
-    public async Task FillFileRawVideoMetadataAsync(int id, CancellationToken cancellationToken = default)
+    public async Task FillRawVideoMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
