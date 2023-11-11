@@ -14,6 +14,7 @@ public interface IConvertedVideosRepository
 
     // Subtitles
     Task<ConvertedSubtitle> CreateOrReplaceConvertedSubtitleAsync(ConvertedSubtitle convertedSubtitle, CancellationToken cancellationToken = default);
+    Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
 public class ConvertedVideosRepository : IConvertedVideosRepository
@@ -104,5 +105,12 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
             await transaction.TryRollbackAsync(cancellationToken);
             throw;
         }
+    }
+
+    public async Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
+    {
+        var subtitle = await _context.ConvertedSubtitles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No subtitle with id {id} exists");
+        subtitle.Metadata = metadata;
+        await _context.SaveChangesAsync(cancellationToken);
     }
 }

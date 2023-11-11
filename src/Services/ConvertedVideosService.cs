@@ -83,7 +83,7 @@ public class ConvertedVideosService : IConvertedVideosService
     {
         var webVideo = await _convertedVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _mediaService.GetFileMetadataAsync(webVideo.Path, cancellationToken);
-        await _convertedVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
+        await _convertedVideosRepository.UpdateSubtitleMetadataAsync(id, metadata, cancellationToken);
     }
 
     public async Task SaveConvertedSubtitleAsync(Stream stream, int rawSubtitleId, CancellationToken cancellationToken = default)
@@ -95,7 +95,7 @@ public class ConvertedVideosService : IConvertedVideosService
         var fileName = $"{Path.GetFileNameWithoutExtension(rawSubtitle.Name)}.vtt";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);
         string subtitleLink = _blobStorageClient.GetLinkFromPath(fileMetadata.Path);
-        var webVideo = await _convertedVideosRepository.CreateOrReplaceConvertedSubtitleAsync(new()
+        var subtitle = await _convertedVideosRepository.CreateOrReplaceConvertedSubtitleAsync(new()
         {
             ConvertedVideoId = convertedVideo.Id,
             RawSubtitleId = rawSubtitleId,
@@ -105,7 +105,7 @@ public class ConvertedVideosService : IConvertedVideosService
 
         _queueService.EnqueueFileToFillMetadata(new()
         {
-            Id = webVideo.Id,
+            Id = subtitle.Id,
             FileType = FileType.ConvertedSubtitle
         });
     }

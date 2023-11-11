@@ -61,11 +61,11 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             var stream = await rawVideoService.ConvertRawVideoToMp4Async(id, cancellationToken);
             await convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
             await rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
-            _queueService.EnqueueWebhook(new()
-            {
-                UserUuid = rawFile.UserUuid,
-                WebhookType = WebhookType.VideoConversionFinished,
-            });
+            // _queueService.EnqueueWebhook(new()
+            // {
+            //     UserUuid = rawFile.UserUuid,
+            //     WebhookType = WebhookType.VideoConversionFinished,
+            // });
         }
         catch
         {
@@ -88,11 +88,11 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             var stream = await rawVideoService.ConvertRawSubtitleToVttAsync(id, cancellationToken);
             await convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
             await rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converted, cancellationToken);
-            _queueService.EnqueueWebhook(new()
-            {
-                UserUuid = rawSubtitle.UserUuid,
-                WebhookType = WebhookType.SubtitleConversionFinished,
-            });
+            // _queueService.EnqueueWebhook(new()
+            // {
+            //     UserUuid = rawSubtitle.UserUuid,
+            //     WebhookType = WebhookType.SubtitleConversionFinished,
+            // });
         }
         catch
         {
