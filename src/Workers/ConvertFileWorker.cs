@@ -9,7 +9,6 @@ namespace Workers;
 
 public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 {
-    private readonly IQueueService _queueService;
     readonly string _queueUrl;
     public ConvertFileWorker(
         ILogger<ConvertFileWorker> logger,
@@ -19,7 +18,6 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     ) : base(logger, queueService, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.ConvertQueueName;
-        _queueService = queueService;
     }
     protected override string QueueUrl => _queueUrl;
     protected override Task ProcessMessage(IServiceScope scope, FileToConvert fileToConvert, CancellationToken cancellationToken)

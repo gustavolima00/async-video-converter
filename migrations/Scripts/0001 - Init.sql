@@ -21,6 +21,7 @@ create table raw_videos(
 create table raw_subtitles(
     id serial primary key,
     name varchar(255) not null,
+    language varchar(255),
     path varchar(255) not null unique,
     conversion_status varchar(255) not null,
     user_uuid uuid,

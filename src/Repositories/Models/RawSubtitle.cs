@@ -12,6 +12,9 @@ public class RawSubtitle
     [Column("name")]
     public string Name { get; set; } = "";
 
+    [Column("language")]
+    public string Language { get; set; } = "";
+
     [Column("path")]
     public string Path { get; set; } = "";
 
