@@ -1,3 +1,4 @@
+using System.Text;
 using Xabe.FFmpeg;
 
 namespace Clients.FFmpeg;
@@ -6,6 +7,7 @@ public interface IFFmpegClient
 {
     Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -55,7 +57,7 @@ public class FFmpegClient : IFFmpegClient
 
     public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
     {
-        var conversion = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Convert(inputPath, outputPath);
+        var conversion = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Convert(inputPath, outputPath, true);
         await conversion.Start(cancellationToken);
     }
 
@@ -81,5 +83,31 @@ public class FFmpegClient : IFFmpegClient
                 File.Delete(outputFilePath);
             }
         }
+    }
+
+    public async Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default)
+    {
+        using var reader = new StreamReader(srtStream);
+        using var writer = new StringWriter();
+
+        await writer.WriteLineAsync("WEBVTT");
+        await writer.WriteLineAsync();
+
+        string? line;
+        while ((line = await reader.ReadLineAsync()) is not null)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (int.TryParse(line, out _))
+            {
+                continue;
+            }
+
+            line = line.Replace(',', '.');
+
+            await writer.WriteLineAsync(line);
+        }
+
+        return new MemoryStream(Encoding.UTF8.GetBytes(writer.ToString()));
     }
 }
