@@ -55,6 +55,10 @@ public interface IRawVideoService
         CancellationToken cancellationToken = default
     );
 
+    Task<Stream> ConvertRawSubtitleToVttAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public class RawVideosService : IRawVideoService
@@ -165,5 +169,12 @@ public class RawVideosService : IRawVideoService
         var rawSubtitle = await _rawFilesRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw subtitle with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadataAsync(rawSubtitle.Path, cancellationToken);
         await _rawFilesRepository.UpdateSubtitleMetadataAsync(id, metadata, cancellationToken);
+    }
+
+    public async Task<Stream> ConvertRawSubtitleToVttAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var rawSubtitle = await _rawFilesRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw subtitle with id {id} not found");
+        var vttStream = await _videoManagerService.ConvertSrtToVttAsync(rawSubtitle.Path, cancellationToken);
+        return vttStream;
     }
 }
