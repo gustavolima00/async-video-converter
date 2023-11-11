@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Configuration;
@@ -7,21 +8,20 @@ namespace Workers;
 
 public class WebhookWorker : BaseQueueWorker<WebHookDetails>
 {
-    private readonly IWebhookService _webhookService;
     readonly string _queueUrl;
     public WebhookWorker(
         ILogger<WebhookWorker> logger,
         IQueueService queueService,
         QueuesConfiguration queuesConfiguration,
-        IWebhookService webhookService
-    ) : base(logger, queueService)
+        IServiceScopeFactory serviceScopeFactory
+    ) : base(logger, queueService, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.WebhookQueueName;
-        _webhookService = webhookService;
     }
     protected override string QueueUrl => _queueUrl;
-    protected override async Task ProcessMessage(WebHookDetails webHookDetails, CancellationToken cancellationToken)
+    protected override async Task ProcessMessage(IServiceScope scope, WebHookDetails webHookDetails, CancellationToken cancellationToken)
     {
-        await _webhookService.SendWebhookAsync(webHookDetails, cancellationToken);
+        var webhookService = scope.ServiceProvider.GetRequiredService<IWebhookService>();
+        await webhookService.SendWebhookAsync(webHookDetails, cancellationToken);
     }
 }

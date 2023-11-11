@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Repositories.Models;
 using Services;
@@ -8,44 +9,58 @@ namespace Workers;
 
 public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 {
-    private readonly IRawVideoService _rawVideoService;
-    private readonly IConvertedVideosService _convertedVideoService;
     private readonly IQueueService _queueService;
     readonly string _queueUrl;
     public ConvertFileWorker(
         ILogger<ConvertFileWorker> logger,
         IQueueService queueService,
-        IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
-        IConvertedVideosService webVideoService
-    ) : base(logger, queueService)
+        IServiceScopeFactory serviceScopeFactory
+    ) : base(logger, queueService, serviceScopeFactory)
     {
-        _rawVideoService = fileStorageService;
         _queueUrl = queuesConfiguration.ConvertQueueName;
-        _convertedVideoService = webVideoService;
         _queueService = queueService;
     }
     protected override string QueueUrl => _queueUrl;
-    protected override Task ProcessMessage(FileToConvert fileToConvert, CancellationToken cancellationToken)
+    protected override Task ProcessMessage(IServiceScope scope, FileToConvert fileToConvert, CancellationToken cancellationToken)
     {
+        var rawVideoService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
+        var convertedVideoService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
 
         return fileToConvert.FileType switch
         {
-            FileType.RawVideo => ConvertRawVideoAsync(fileToConvert.Id, cancellationToken),
-            FileType.RawSubtitle => ConvertRawSubtitleAsync(fileToConvert.Id, cancellationToken),
+            FileType.RawVideo =>
+                ConvertRawVideoAsync(
+                    rawVideoService,
+                    convertedVideoService,
+                    fileToConvert.Id,
+                    cancellationToken
+                ),
+            FileType.RawSubtitle =>
+                ConvertRawSubtitleAsync(
+                    rawVideoService,
+                    convertedVideoService,
+                    fileToConvert.Id,
+                    cancellationToken
+                ),
             _ => throw new NotImplementedException()
         };
     }
 
-    private async Task ConvertRawVideoAsync(int id, CancellationToken cancellationToken = default)
+    private async Task ConvertRawVideoAsync(
+        IRawVideoService rawVideoService,
+        IConvertedVideosService convertedVideoService,
+        int id,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {
-            var rawFile = await _rawVideoService.GetRawVideoAsync(id, cancellationToken);
-            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converting, cancellationToken);
-            var stream = await _rawVideoService.ConvertRawVideoToMp4Async(id, cancellationToken);
-            await _convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
-            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            var rawFile = await rawVideoService.GetRawVideoAsync(id, cancellationToken);
+            await rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await rawVideoService.ConvertRawVideoToMp4Async(id, cancellationToken);
+            await convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
+            await rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
             _queueService.EnqueueWebhook(new()
             {
                 UserUuid = rawFile.UserUuid,
@@ -54,20 +69,25 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
         catch
         {
-            await _rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            await rawVideoService.UpdateRawVideoConversionStatus(id, ConversionStatus.Error, cancellationToken);
             throw;
         }
     }
 
-    private async Task ConvertRawSubtitleAsync(int id, CancellationToken cancellationToken = default)
+    private async Task ConvertRawSubtitleAsync(
+        IRawVideoService rawVideoService,
+        IConvertedVideosService convertedVideoService,
+        int id,
+        CancellationToken cancellationToken = default
+    )
     {
         try
         {
-            var rawSubtitle = await _rawVideoService.GetRawSubtitleAsync(id, cancellationToken);
-            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converting, cancellationToken);
-            var stream = await _rawVideoService.ConvertRawSubtitleToVttAsync(id, cancellationToken);
-            await _convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
-            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            var rawSubtitle = await rawVideoService.GetRawSubtitleAsync(id, cancellationToken);
+            await rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await rawVideoService.ConvertRawSubtitleToVttAsync(id, cancellationToken);
+            await convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
+            await rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converted, cancellationToken);
             _queueService.EnqueueWebhook(new()
             {
                 UserUuid = rawSubtitle.UserUuid,
@@ -76,7 +96,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
         catch
         {
-            await _rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            await rawVideoService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Error, cancellationToken);
             throw;
         }
     }

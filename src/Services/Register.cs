@@ -10,11 +10,11 @@ public static class Register
         QueuesConfiguration queuesConfiguration)
     {
         services.AddSingleton(queuesConfiguration);
-        services.AddSingleton<IRawVideoService, RawVideosService>();
-        services.AddSingleton<IMediaService, MediaService>();
-        services.AddSingleton<IConvertedVideosService, ConvertedVideosService>();
+        services.AddScoped<IRawVideoService, RawVideosService>();
+        services.AddScoped<IMediaService, MediaService>();
+        services.AddScoped<IConvertedVideosService, ConvertedVideosService>();
         services.AddSingleton<IQueueService, QueueService>();
-        services.AddSingleton<IWebhookService, WebhookService>();
+        services.AddScoped<IWebhookService, WebhookService>();
         return services;
     }
 }

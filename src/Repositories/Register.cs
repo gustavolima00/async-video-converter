@@ -10,10 +10,10 @@ public static class Register
          PostgresConfiguration postgresConfiguration)
     {
         services.AddSingleton(postgresConfiguration);
-        services.AddSingleton<DatabaseContext>();
-        services.AddSingleton<IWebhookRepository, WebhookRepository>();
-        services.AddSingleton<IRawVideosRepository, RawVideosRepository>();
-        services.AddSingleton<IConvertedVideosRepository, ConvertedVideosRepository>();
+        services.AddDbContext<DatabaseContext>();
+        services.AddScoped<IWebhookRepository, WebhookRepository>();
+        services.AddScoped<IRawVideosRepository, RawVideosRepository>();
+        services.AddScoped<IConvertedVideosRepository, ConvertedVideosRepository>();
         return services;
     }
 }

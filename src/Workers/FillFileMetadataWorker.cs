@@ -1,3 +1,4 @@
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Services;
 using Services.Configuration;
@@ -7,30 +8,29 @@ namespace Workers;
 
 public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 {
-    private readonly IRawVideoService _fileStorageService;
-    private readonly IConvertedVideosService _webVideoService;
     private readonly string _queueName;
     public FillFileMetadataWorker(
         ILogger<FillFileMetadataWorker> logger,
         IQueueService queueService,
-        IRawVideoService fileStorageService,
         QueuesConfiguration queuesConfiguration,
-        IConvertedVideosService webVideoService
-    ) : base(logger, queueService)
+        IServiceScopeFactory serviceScopeFactory
+    ) : base(logger, queueService, serviceScopeFactory)
     {
-        _fileStorageService = fileStorageService;
         _queueName = queuesConfiguration.FillMetadataQueueName;
-        _webVideoService = webVideoService;
     }
     protected override string QueueUrl => _queueName;
 
-    protected override Task ProcessMessage(FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
+    protected override Task ProcessMessage(IServiceScope scope, FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
     {
+        var rawVideoService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
+        var convertedVideosService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
+
         return fileToFillMetadata.FileType switch
         {
-            FileType.RawVideo => _fileStorageService.FillRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.RawSubtitle => _fileStorageService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.ConvertedVideo => _webVideoService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawVideo => rawVideoService.FillRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawSubtitle => rawVideoService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.ConvertedVideo => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.ConvertedSubtitle => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             _ => throw new NotImplementedException(),
         };
     }
