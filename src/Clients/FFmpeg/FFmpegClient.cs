@@ -8,6 +8,7 @@ public interface IFFmpegClient
     Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
+    Task<List<(ISubtitleStream, Stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -109,5 +110,43 @@ public class FFmpegClient : IFFmpegClient
         }
 
         return new MemoryStream(Encoding.UTF8.GetBytes(writer.ToString()));
+    }
+
+    public async Task<List<(ISubtitleStream, Stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default)
+    {
+        string? videoPath = null;
+        List<string> subtitlesPaths = new();
+        try
+        {
+            videoPath = await SaveStreamIntoTempFile(videoStream, "mp4", cancellationToken);
+            var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(videoPath);
+            var subtitleStreams = mediaInfo.SubtitleStreams;
+            List<(ISubtitleStream, Stream)> subtitles = new();
+
+            List<string> subtitleFiles = new();
+
+            foreach (var stream in subtitleStreams)
+            {
+                string tempFilePath = Path.GetTempFileName();
+                string subtitlePath = Path.ChangeExtension(tempFilePath, "srt");
+                var conversion = Xabe.FFmpeg.FFmpeg.Conversions.New()
+                                    .AddStream(stream)
+                                    .SetOutput(subtitlePath);
+
+                await conversion.Start(cancellationToken);
+                subtitleFiles.Add(subtitlePath);
+                subtitles.Add((stream, File.OpenRead(subtitlePath)));
+            }
+
+            return subtitles;
+        }
+        finally
+        {
+            if (videoPath is not null)
+            {
+                File.Delete(videoPath);
+            }
+            subtitlesPaths.ForEach(File.Delete);
+        }
     }
 }
