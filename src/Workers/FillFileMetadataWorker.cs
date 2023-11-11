@@ -30,7 +30,7 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
             FileType.RawVideo => rawVideoService.FillRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.RawSubtitle => rawVideoService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedVideo => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.ConvertedSubtitle => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.ConvertedSubtitle => convertedVideosService.FillSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             _ => throw new NotImplementedException(),
         };
     }

@@ -26,5 +26,5 @@ public class ConvertedVideo
 
     public MediaMetadata? Metadata { get; set; }
 
-    public ICollection<ConvertedSubtitle> Subtitles { get; set; } = new List<ConvertedSubtitle>();
+    public ICollection<ConvertedSubtitle> Subtitles { get; set; } = null!;
 }

@@ -24,6 +24,6 @@ public class RawVideo
 
     [Column("user_uuid")]
     public Guid UserUuid { get; set; }
-    public ICollection<RawSubtitle> Subtitles { get; set; } = new List<RawSubtitle>();
+    public virtual ICollection<RawSubtitle> Subtitles { get; set; } = null!;
 
 }

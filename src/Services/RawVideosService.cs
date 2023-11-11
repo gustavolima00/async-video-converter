@@ -42,7 +42,7 @@ public interface IRawVideoService
     );
 
     // Raw Subtitles
-    Task<RawVideo> SaveRawSubtitleAsync(
+    Task<RawSubtitle> SaveRawSubtitleAsync(
         Guid userUuid,
         Stream fileStream,
         string fileName,
@@ -149,7 +149,7 @@ public class RawVideosService : IRawVideoService
         return rawFile;
     }
 
-    public async Task<RawVideo> SaveRawSubtitleAsync(
+    public async Task<RawSubtitle> SaveRawSubtitleAsync(
         Guid userUuid,
         Stream fileStream,
         string fileName,
@@ -180,7 +180,7 @@ public class RawVideosService : IRawVideoService
             Id = rawSubtitle.Id,
             FileType = FileType.RawSubtitle
         });
-        return await GetRawVideoAsync(rawVideo.Id, cancellationToken);
+        return rawSubtitle;
     }
 
     public async Task FillRawSubtitleMetadataAsync(int id, CancellationToken cancellationToken = default)

@@ -39,7 +39,7 @@ public class RawVideosRepository : IRawVideosRepository
 
     public async Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)
     {
-        return await _context.RawVideos.FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+        return await _context.RawVideos.Include(rf => rf.Subtitles).FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
     }
 
     public async Task<RawVideo> CreateOrReplaceAsync(RawVideo newFile, CancellationToken cancellationToken = default)

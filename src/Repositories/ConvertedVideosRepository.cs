@@ -29,12 +29,12 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
 
     public async Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.ConvertedVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
+        return await _context.ConvertedVideos.FirstOrDefaultAsync(rf => rf.Id == id, cancellationToken);
     }
 
     public async Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.ConvertedVideos.ToListAsync(cancellationToken);
+        return await _context.ConvertedVideos.Include(rf => rf.Subtitles).ToListAsync(cancellationToken);
     }
 
     public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default)
