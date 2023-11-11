@@ -5,5 +5,5 @@ public enum FileType
   RawVideo,
   RawSubtitle,
   ConvertedVideo,
-  Subtitle
+  ConvertedSubtitle
 }
