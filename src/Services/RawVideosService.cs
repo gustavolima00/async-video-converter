@@ -1,14 +1,10 @@
 ﻿using Clients.BlobStorage;
 using Repositories;
 using Repositories.Models;
+using Services.Exceptions;
 using Services.Models;
 
 namespace Services;
-
-public class RawVideoServiceException : Exception
-{
-    public RawVideoServiceException(string message) : base(message) { }
-}
 
 public interface IRawVideoService
 {

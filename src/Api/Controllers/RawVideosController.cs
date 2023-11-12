@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Microsoft.AspNetCore.Mvc;
 using Services;
+using Services.Exceptions;
 
 namespace Api.Controllers;
 
@@ -28,7 +29,7 @@ public class RawVideosController : ControllerBase
             var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
         }
-        catch (RawVideoServiceException e)
+        catch (ServicesException e)
         {
             return BadRequest(new ProblemDetails
             {
@@ -79,7 +80,7 @@ public class RawVideosController : ControllerBase
             var fileDetails = await _rawFileService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
-        catch (RawVideoServiceException e)
+        catch (ServicesException e)
         {
             return BadRequest(new ProblemDetails
             {

@@ -1,14 +1,10 @@
 ﻿using Clients.BlobStorage;
 using Repositories;
 using Repositories.Models;
+using Services.Exceptions;
 using Services.Models;
 
 namespace Services;
-
-public class ConvertedVideoServiceException : Exception
-{
-    public ConvertedVideoServiceException(string message) : base(message) { }
-}
 
 public interface IConvertedVideosService
 {

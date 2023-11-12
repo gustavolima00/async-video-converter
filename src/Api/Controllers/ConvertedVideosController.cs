@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Services;
+using Services.Exceptions;
 
 namespace Api.Controllers;
 
@@ -22,7 +23,7 @@ public class ConvertedVideosController : ControllerBase
             var result = await _webVideoService.ListConvertedVideosAsync(cancellationToken);
             return Ok(result);
         }
-        catch (ConvertedVideoServiceException e)
+        catch (ServicesException e)
         {
             return BadRequest(new ProblemDetails
             {
