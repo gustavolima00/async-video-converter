@@ -31,7 +31,7 @@ public class RawVideosController : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var fileDetails = await _rawVideosService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
+            var fileDetails = await _rawVideosService.SaveAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (ServicesException e)
@@ -82,7 +82,7 @@ public class RawVideosController : ControllerBase
     {
         try
         {
-            var fileDetails = await _rawVideosService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
+            var fileDetails = await _rawVideosService.GetAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (ServicesException e)

@@ -55,11 +55,11 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     {
         try
         {
-            var rawFile = await rawVideosService.GetRawVideoAsync(id, cancellationToken);
-            await rawVideosService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converting, cancellationToken);
-            var stream = await rawVideosService.ConvertRawVideoToMp4Async(id, cancellationToken);
+            var rawFile = await rawVideosService.GetAsync(id, cancellationToken);
+            await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await rawVideosService.ConvertToMp4Async(id, cancellationToken);
             await convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
-            await rawVideosService.UpdateRawVideoConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
             // _queueService.EnqueueWebhook(new()
             // {
             //     UserUuid = rawFile.UserUuid,
@@ -68,7 +68,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
         catch
         {
-            await rawVideosService.UpdateRawVideoConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
             throw;
         }
     }

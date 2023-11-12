@@ -8,31 +8,30 @@ namespace Services;
 
 public interface IRawVideoService
 {
-    // Raw Videos
-    Task<RawVideo> SaveRawVideoAsync(
+    Task<RawVideo> SaveAsync(
         Guid userUuid,
         Stream fileStream,
         string fileName,
         CancellationToken cancellationToken = default
     );
-    Task FillRawVideoMetadataAsync(
+    Task FillMetadataAsync(
         int id,
         CancellationToken cancellationToken = default
     );
-    Task<RawVideo> GetRawVideoAsync(
+    Task<RawVideo> GetAsync(
         Guid userUuid,
         string fileName,
         CancellationToken cancellationToken = default
     );
-    Task<RawVideo> GetRawVideoAsync(
+    Task<RawVideo> GetAsync(
         int id,
         CancellationToken cancellationToken = default
     );
-    Task<Stream> ConvertRawVideoToMp4Async(
+    Task<Stream> ConvertToMp4Async(
         int id,
         CancellationToken cancellationToken = default
     );
-    Task UpdateRawVideoConversionStatus(
+    Task UpdateConversionStatusAsync(
         int id, ConversionStatus status,
         CancellationToken cancellationToken = default
     );
@@ -58,7 +57,7 @@ public class RawVideosService : IRawVideoService
         _queueService = queueService;
     }
 
-    public async Task<RawVideo> SaveRawVideoAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> SaveAsync(Guid userUuid, Stream fileStream, string fileName, CancellationToken cancellationToken = default)
     {
         var folderPath = $"{userUuid}/raw_videos";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
@@ -84,33 +83,33 @@ public class RawVideosService : IRawVideoService
         return rawFile;
     }
 
-    public async Task<RawVideo> GetRawVideoAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> GetAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
     {
         string path = $"{userUuid}/raw_videos/{fileName}";
         var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
         return rawFile;
     }
 
-    public async Task FillRawVideoMetadataAsync(int id, CancellationToken cancellationToken = default)
+    public async Task FillMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
         await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
-    public async Task UpdateRawVideoConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default)
+    public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
         await _rawFilesRepository.UpdateConversionStatusAsync(id, status, cancellationToken);
     }
 
-    public async Task<Stream> ConvertRawVideoToMp4Async(int id, CancellationToken cancellationToken = default)
+    public async Task<Stream> ConvertToMp4Async(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
         return mp4Stream;
     }
 
-    public async Task<RawVideo> GetRawVideoAsync(int id, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> GetAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         return rawFile;
