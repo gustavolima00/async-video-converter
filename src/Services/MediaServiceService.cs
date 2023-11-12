@@ -2,6 +2,7 @@
 using Clients.BlobStorage;
 using Clients.FFmpeg;
 using Repositories.Models;
+using Services.Models;
 
 namespace Services;
 
@@ -10,6 +11,7 @@ public interface IMediaService
     Task<MediaMetadata> GetFileMetadataAsync(string path, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4Async(string path, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVttAsync(string path, CancellationToken cancellationToken = default);
+    Task<IEnumerable<SubtitleInfo>> ExtractSubtitlesAsync(string path, CancellationToken cancellationToken = default);
 }
 
 public class MediaService : IMediaService
@@ -45,5 +47,12 @@ public class MediaService : IMediaService
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var vttStream = await _ffmpegClient.ConvertSrtToVtt(fileStream, cancellationToken);
         return vttStream;
+    }
+
+    public async Task<IEnumerable<SubtitleInfo>> ExtractSubtitlesAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
+        var subtitles = await _ffmpegClient.ExtractSubtitles(fileStream, cancellationToken);
+        return subtitles.Select(s => new SubtitleInfo(s.metadata, s.stream));
     }
 }

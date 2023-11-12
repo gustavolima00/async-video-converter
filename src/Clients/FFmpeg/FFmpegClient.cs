@@ -8,7 +8,7 @@ public interface IFFmpegClient
     Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
-    Task<List<(ISubtitleStream, Stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
+    Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -121,7 +121,7 @@ public class FFmpegClient : IFFmpegClient
             videoPath = await SaveStreamIntoTempFile(videoStream, "mp4", cancellationToken);
             var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(videoPath);
             var subtitleStreams = mediaInfo.SubtitleStreams;
-            List<(ISubtitleStream, Stream)> subtitles = new();
+            List<(ISubtitleStream metadata, Stream stream)> subtitles = new();
 
             List<string> subtitleFiles = new();
 
