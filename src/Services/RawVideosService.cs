@@ -41,6 +41,11 @@ public interface IRawVideoService
         CancellationToken cancellationToken = default
     );
 
+    Task ExtractSubtitlesAsync(
+        int id,
+        CancellationToken cancellationToken = default
+    );
+
     // Raw Subtitles
     Task<RawSubtitle> SaveRawSubtitleAsync(
         Guid userUuid,
@@ -159,7 +164,17 @@ public class RawVideosService : IRawVideoService
     {
         var rawVideoPath = $"{userUuid}/raw_videos/{rawVideoName}";
         var rawVideo = await _rawFilesRepository.TryGetByPathAsync(rawVideoPath, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {rawVideoPath} not found");
-        var folderPath = $"{userUuid}/raw_subtitles";
+        return await SaveRawSubtitleAsync(fileStream, fileName, rawVideo, cancellationToken);
+    }
+
+    public async Task<RawSubtitle> SaveRawSubtitleAsync(
+        Stream fileStream,
+        string fileName,
+        RawVideo rawVideo,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var folderPath = $"{rawVideo.UserUuid}/raw_subtitles";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
         var rawSubtitle = await _rawFilesRepository.CreateOrReplaceRawSubtitleAsync(
             new RawSubtitle
@@ -167,7 +182,7 @@ public class RawVideosService : IRawVideoService
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
                 RawVideoId = rawVideo.Id,
-                UserUuid = userUuid
+                UserUuid = rawVideo.UserUuid
             }
             , cancellationToken);
         _queueService.EnqueueFileToFillMetadata(new()
@@ -206,5 +221,17 @@ public class RawVideosService : IRawVideoService
     public async Task UpdateRawSubtitleConversionStatus(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
         await _rawFilesRepository.UpdateSubtitleConversionStatusAsync(id, status, cancellationToken);
+    }
+
+    public async Task ExtractSubtitlesAsync(int id, CancellationToken cancellationToken = default)
+    {
+        var rawVideo = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        var userUuid = rawVideo.UserUuid;
+        var subtitles = await _videoManagerService.ExtractSubtitlesAsync(rawVideo.Path, cancellationToken);
+        var subtitleNamePrefix = Path.GetFileNameWithoutExtension(rawVideo.Name);
+        var subtitlesTasks = subtitles.Select(s =>
+            SaveRawSubtitleAsync(s.Stream, $"{subtitleNamePrefix}_${s.Language}", rawVideo, cancellationToken)
+        );
+        await Task.WhenAll(subtitlesTasks);
     }
 }
