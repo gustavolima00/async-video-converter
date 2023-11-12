@@ -80,6 +80,10 @@ public class RawVideosService : IRawVideoService
             Id = rawFile.Id,
             FileType = FileType.RawVideo
         });
+        _queueService.EnqueueVideoToExtractSubtitles(new()
+        {
+            Id = rawFile.Id
+        });
         return rawFile;
     }
 

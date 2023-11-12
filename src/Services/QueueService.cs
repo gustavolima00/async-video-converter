@@ -8,6 +8,7 @@ public interface IQueueService
 {
     void EnqueueFileToFillMetadata(FileToFillMetadata fileToFillMetadata);
     void EnqueueFileToConvert(FileToConvert fileToConvert);
+    void EnqueueVideoToExtractSubtitles(VideoToExtractSubtitles videoToExtractSubtitles);
     void EnqueueWebhook(WebHookDetails webhookDetails);
     void EnqueueMessage<T>(string queueName, T message);
     IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
@@ -37,6 +38,11 @@ public class QueueService : IQueueService
     public void EnqueueFileToConvert(FileToConvert fileToConvert)
     {
         EnqueueMessage(_queuesConfiguration.ConvertQueueName, fileToConvert);
+    }
+
+    public void EnqueueVideoToExtractSubtitles(VideoToExtractSubtitles videoToExtractSubtitles)
+    {
+        EnqueueMessage(_queuesConfiguration.ExtractSubtitlesQueueName, videoToExtractSubtitles);
     }
 
     public void EnqueueWebhook(WebHookDetails webhookDetails)

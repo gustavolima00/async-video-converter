@@ -35,6 +35,11 @@ public interface IRawSubtitlesService
         int id,
         CancellationToken cancellationToken = default
     );
+
+    Task ExtractSubtitlesAsync(
+        int rawVideoId,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public class RawSubtitlesService : IRawSubtitlesService
@@ -128,14 +133,14 @@ public class RawSubtitlesService : IRawSubtitlesService
         await _rawFilesRepository.UpdateSubtitleConversionStatusAsync(id, status, cancellationToken);
     }
 
-    public async Task ExtractSubtitlesAsync(int id, CancellationToken cancellationToken = default)
+    public async Task ExtractSubtitlesAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
-        var rawVideo = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawRawSubtitlesServiceException($"Raw file with id {id} not found");
+        var rawVideo = await _rawFilesRepository.TryGetByIdAsync(rawVideoId, cancellationToken) ?? throw new RawRawSubtitlesServiceException($"Raw file with id {rawVideoId} not found");
         var userUuid = rawVideo.UserUuid;
         var subtitles = await _videoManagerService.ExtractSubtitlesAsync(rawVideo.Path, cancellationToken);
         var subtitleNamePrefix = Path.GetFileNameWithoutExtension(rawVideo.Name);
         var subtitlesTasks = subtitles.Select(s =>
-            SaveAsync(s.Stream, $"{subtitleNamePrefix}_${s.Language}", rawVideo, cancellationToken)
+            SaveAsync(s.Stream, s.Language, rawVideo, cancellationToken)
         );
         await Task.WhenAll(subtitlesTasks);
     }
