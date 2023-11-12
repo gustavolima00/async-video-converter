@@ -13,6 +13,7 @@ public interface IConvertedVideosRepository
     Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
 
     // Subtitles
+    Task<ConvertedSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ConvertedSubtitle> CreateOrReplaceConvertedSubtitleAsync(ConvertedSubtitle convertedSubtitle, CancellationToken cancellationToken = default);
     Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
@@ -75,6 +76,12 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
     public async Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
         return await _context.ConvertedVideos.FirstOrDefaultAsync(rf => rf.RawVideoId == rawVideoId, cancellationToken);
+    }
+
+    // Subtitles
+    public async Task<ConvertedSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default)
+    {
+        return await _context.ConvertedSubtitles.FirstOrDefaultAsync(rf => rf.Id == id, cancellationToken);
     }
 
     public async Task<ConvertedSubtitle> CreateOrReplaceConvertedSubtitleAsync(ConvertedSubtitle convertedSubtitle, CancellationToken cancellationToken = default)

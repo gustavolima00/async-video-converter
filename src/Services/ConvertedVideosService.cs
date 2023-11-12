@@ -44,14 +44,14 @@ public class ConvertedVideosService : IConvertedVideosService
 
     public async Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
-        var webVideo = await _convertedVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        var webVideo = await _convertedVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new ConvertedVideoServiceException($"Raw file with id {id} not found");
         var metadata = await _mediaService.GetFileMetadataAsync(webVideo.Path, cancellationToken);
         await _convertedVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
     public async Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawVideosRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {rawFileId} not found");
+        var rawFile = await _rawVideosRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new ConvertedVideoServiceException($"Raw file with id {rawFileId} not found");
         var folderPath = $"{rawFile.UserUuid}/converted_videos";
         var fileName = $"{Path.GetFileNameWithoutExtension(rawFile.Name)}.mp4";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);

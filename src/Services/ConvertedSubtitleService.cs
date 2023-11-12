@@ -20,14 +20,14 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
     private readonly IRawVideosRepository _rawVideosRepository;
 
     public ConvertedSubtitleService(
-        IConvertedVideosRepository webVideosRepository,
+        IConvertedVideosRepository convertedVideosRepository,
         IMediaService videoManagerService,
         IQueueService queueService,
         IBlobStorageClient blobStorageClient,
         IRawVideosRepository rawFilesRepository
     )
     {
-        _convertedVideosRepository = webVideosRepository;
+        _convertedVideosRepository = convertedVideosRepository;
         _mediaService = videoManagerService;
         _queueService = queueService;
         _blobStorageClient = blobStorageClient;
@@ -36,16 +36,16 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
 
     public async Task FillSubtitleMetadataAsync(int id, CancellationToken cancellationToken = default)
     {
-        var webVideo = await _convertedVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
-        var metadata = await _mediaService.GetFileMetadataAsync(webVideo.Path, cancellationToken);
+        var convertedSubtitles = await _convertedVideosRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw file with id {id} not found");
+        var metadata = await _mediaService.GetFileMetadataAsync(convertedSubtitles.Path, cancellationToken);
         await _convertedVideosRepository.UpdateSubtitleMetadataAsync(id, metadata, cancellationToken);
     }
 
     public async Task SaveConvertedSubtitleAsync(Stream stream, int rawSubtitleId, CancellationToken cancellationToken = default)
     {
-        var rawSubtitle = await _rawVideosRepository.TryGetSubtitleByIdAsync(rawSubtitleId, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {rawSubtitleId} not found");
-        var rawVideo = await _rawVideosRepository.TryGetByIdAsync(rawSubtitle.RawVideoId, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {rawSubtitle.RawVideoId} not found");
-        var convertedVideo = await _convertedVideosRepository.TryGetByRawVideoIdAsync(rawVideo.Id, cancellationToken) ?? throw new RawVideoServiceException($"Converted video with raw video id {rawVideo.Id} not found");
+        var rawSubtitle = await _rawVideosRepository.TryGetSubtitleByIdAsync(rawSubtitleId, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw subtitle with id {rawSubtitleId} not found");
+        var rawVideo = await _rawVideosRepository.TryGetByIdAsync(rawSubtitle.RawVideoId, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw video with id {rawSubtitle.RawVideoId} not found");
+        var convertedVideo = await _convertedVideosRepository.TryGetByRawVideoIdAsync(rawVideo.Id, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Converted video with raw video id {rawVideo.Id} not found");
         var folderPath = $"{rawSubtitle.UserUuid}/converted_subtitles";
         var fileName = $"{Path.GetFileNameWithoutExtension(rawSubtitle.Name)}.vtt";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);
@@ -56,6 +56,7 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
             RawSubtitleId = rawSubtitleId,
             Link = subtitleLink,
             Path = fileMetadata.Path,
+            Language = rawSubtitle.Language
         }, cancellationToken);
 
         _queueService.EnqueueFileToFillMetadata(new()
