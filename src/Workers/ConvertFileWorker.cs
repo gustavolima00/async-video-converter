@@ -25,6 +25,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         var rawVideosService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
         var rawSubtitlesService = scope.ServiceProvider.GetRequiredService<IRawSubtitlesService>();
         var convertedVideoService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
+        var convertedSubtitleService = scope.ServiceProvider.GetRequiredService<IConvertedSubtitleService>();
 
         return fileToConvert.FileType switch
         {
@@ -38,7 +39,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             FileType.RawSubtitle =>
                 ConvertRawSubtitleAsync(
                     rawSubtitlesService,
-                    convertedVideoService,
+                    convertedSubtitleService,
                     fileToConvert.Id,
                     cancellationToken
                 ),
@@ -75,7 +76,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 
     private static async Task ConvertRawSubtitleAsync(
         IRawSubtitlesService rawSubtitlesService,
-        IConvertedVideosService convertedVideoService,
+        IConvertedSubtitleService convertedSubtitleService,
         int id,
         CancellationToken cancellationToken = default
     )
@@ -85,7 +86,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             var rawSubtitle = await rawSubtitlesService.GetAsync(id, cancellationToken);
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
             var stream = await rawSubtitlesService.ConvertToVttAsync(id, cancellationToken);
-            await convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
+            await convertedSubtitleService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
             // _queueService.EnqueueWebhook(new()
             // {

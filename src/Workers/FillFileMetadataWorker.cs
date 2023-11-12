@@ -25,13 +25,14 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
         var rawVideosService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
         var rawSubtitlesService = scope.ServiceProvider.GetRequiredService<IRawSubtitlesService>();
         var convertedVideosService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
+        var convertedSubtitlesService = scope.ServiceProvider.GetRequiredService<IConvertedSubtitleService>();
 
         return fileToFillMetadata.FileType switch
         {
             FileType.RawVideo => rawVideosService.FillMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.RawSubtitle => rawSubtitlesService.FillMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedVideo => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.ConvertedSubtitle => convertedVideosService.FillSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.ConvertedSubtitle => convertedSubtitlesService.FillSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             _ => throw new NotImplementedException(),
         };
     }
