@@ -22,13 +22,14 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
 
     protected override Task ProcessMessage(IServiceScope scope, FileToFillMetadata fileToFillMetadata, CancellationToken cancellationToken)
     {
-        var rawVideoService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
+        var rawVideosService = scope.ServiceProvider.GetRequiredService<IRawVideoService>();
+        var rawSubtitlesService = scope.ServiceProvider.GetRequiredService<IRawSubtitlesService>();
         var convertedVideosService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
 
         return fileToFillMetadata.FileType switch
         {
-            FileType.RawVideo => rawVideoService.FillRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.RawSubtitle => rawVideoService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawVideo => rawVideosService.FillRawVideoMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawSubtitle => rawSubtitlesService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedVideo => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedSubtitle => convertedVideosService.FillSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             _ => throw new NotImplementedException(),

@@ -9,11 +9,16 @@ namespace Api.Controllers;
 [ApiController]
 public class RawVideosController : ControllerBase
 {
-    private readonly IRawVideoService _rawFileService;
+    private readonly IRawVideoService _rawVideosService;
+    private readonly IRawSubtitlesService _rawSubtitlesService;
 
-    public RawVideosController(IRawVideoService fileStorageService)
+    public RawVideosController(
+        IRawVideoService rawVideosService,
+        IRawSubtitlesService rawSubtitlesService
+    )
     {
-        _rawFileService = fileStorageService;
+        _rawVideosService = rawVideosService;
+        _rawSubtitlesService = rawSubtitlesService;
     }
 
     [HttpPost("send-video")]
@@ -26,7 +31,7 @@ public class RawVideosController : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var fileDetails = await _rawFileService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
+            var fileDetails = await _rawVideosService.SaveRawVideoAsync(userUuid, stream, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (ServicesException e)
@@ -55,7 +60,7 @@ public class RawVideosController : ControllerBase
             }
 
             using var stream = file.OpenReadStream();
-            var rawVideo = await _rawFileService.SaveRawSubtitleAsync(userUuid, stream, fileName, rawVideoName, cancellationToken);
+            var rawVideo = await _rawSubtitlesService.SaveRawSubtitleAsync(userUuid, stream, fileName, rawVideoName, cancellationToken);
             return Ok(rawVideo);
         }
         catch (RawVideoServiceException e)
@@ -77,7 +82,7 @@ public class RawVideosController : ControllerBase
     {
         try
         {
-            var fileDetails = await _rawFileService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
+            var fileDetails = await _rawVideosService.GetRawVideoAsync(userUuid, fileName, cancellationToken);
             return Ok(fileDetails);
         }
         catch (ServicesException e)
