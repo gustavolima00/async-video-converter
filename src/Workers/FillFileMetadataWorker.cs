@@ -29,7 +29,7 @@ public class FillFileMetadataWorker : BaseQueueWorker<FileToFillMetadata>
         return fileToFillMetadata.FileType switch
         {
             FileType.RawVideo => rawVideosService.FillMetadataAsync(fileToFillMetadata.Id, cancellationToken),
-            FileType.RawSubtitle => rawSubtitlesService.FillRawSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
+            FileType.RawSubtitle => rawSubtitlesService.FillMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedVideo => convertedVideosService.FillFileMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             FileType.ConvertedSubtitle => convertedVideosService.FillSubtitleMetadataAsync(fileToFillMetadata.Id, cancellationToken),
             _ => throw new NotImplementedException(),

@@ -82,11 +82,11 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     {
         try
         {
-            var rawSubtitle = await rawSubtitlesService.GetRawSubtitleAsync(id, cancellationToken);
-            await rawSubtitlesService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converting, cancellationToken);
-            var stream = await rawSubtitlesService.ConvertRawSubtitleToVttAsync(id, cancellationToken);
+            var rawSubtitle = await rawSubtitlesService.GetAsync(id, cancellationToken);
+            await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
+            var stream = await rawSubtitlesService.ConvertToVttAsync(id, cancellationToken);
             await convertedVideoService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
-            await rawSubtitlesService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Converted, cancellationToken);
+            await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
             // _queueService.EnqueueWebhook(new()
             // {
             //     UserUuid = rawSubtitle.UserUuid,
@@ -95,7 +95,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
         catch
         {
-            await rawSubtitlesService.UpdateRawSubtitleConversionStatus(id, ConversionStatus.Error, cancellationToken);
+            await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
             throw;
         }
     }

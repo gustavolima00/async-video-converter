@@ -11,6 +11,7 @@ public static class Register
     {
         services.AddSingleton(queuesConfiguration);
         services.AddScoped<IRawVideoService, RawVideosService>();
+        services.AddScoped<IRawSubtitlesService, RawSubtitlesService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IConvertedVideosService, ConvertedVideosService>();
         services.AddSingleton<IQueueService, QueueService>();

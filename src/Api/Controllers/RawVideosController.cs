@@ -47,7 +47,7 @@ public class RawVideosController : ControllerBase
     [HttpPost("send-subtitle")]
     public async Task<IActionResult> SendSubtitleToConversion(
         [Required] IFormFile file,
-        [FromQuery, Required] string fileName,
+        [FromQuery, Required] string language,
         [FromQuery, Required] string rawVideoName,
         [FromQuery, Required] Guid userUuid,
         CancellationToken cancellationToken)
@@ -60,7 +60,7 @@ public class RawVideosController : ControllerBase
             }
 
             using var stream = file.OpenReadStream();
-            var rawVideo = await _rawSubtitlesService.SaveRawSubtitleAsync(userUuid, stream, fileName, rawVideoName, cancellationToken);
+            var rawVideo = await _rawSubtitlesService.SaveAsync(userUuid, stream, language, rawVideoName, cancellationToken);
             return Ok(rawVideo);
         }
         catch (RawVideoServiceException e)
