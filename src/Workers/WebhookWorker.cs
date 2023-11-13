@@ -22,6 +22,6 @@ public class WebhookWorker : BaseQueueWorker<WebHookDetails>
     protected override async Task ProcessMessage(IServiceScope scope, WebHookDetails webHookDetails, CancellationToken cancellationToken)
     {
         var webhookService = scope.ServiceProvider.GetRequiredService<IWebhookService>();
-        await webhookService.SendWebhookAsync(webHookDetails, cancellationToken);
+        await webhookService.ProcessWebhookAsync(webHookDetails, cancellationToken);
     }
 }
