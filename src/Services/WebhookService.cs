@@ -58,5 +58,4 @@ public class WebhookService : IWebhookService
   {
     _queueService.EnqueueWebhook(webHookDetails);
   }
-
 }

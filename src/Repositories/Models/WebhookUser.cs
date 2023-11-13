@@ -12,4 +12,6 @@ public class WebhookUser
 
     [Column("webhook_url")]
     public string WebhookUrl { get; set; } = "";
+    [Column("events")]
+    public IEnumerable<string> Events { get; set; } = new List<string>();
 }

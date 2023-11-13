@@ -1,7 +1,8 @@
 create table webhook_users(
     id serial primary key,
     uuid uuid not null unique,
-    webhook_url varchar(255) not null
+    webhook_url varchar(255) not null,
+    users varchar(100)[] not null
 );
 
 create table raw_videos(
