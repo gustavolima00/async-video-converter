@@ -8,10 +8,38 @@ namespace Services;
 
 public interface IWebhookService
 {
-  Task<WebhookUser> CreateWebhookUserAsync(string webhookUrl, CancellationToken cancellationToken = default);
-  Task<WebhookUser> GetWebhookUserAsync(Guid userUuid, CancellationToken cancellationToken = default);
-  Task ProcessWebhookAsync(WebHookDetails webHookDetails, CancellationToken cancellationToken = default);
-  void SendWebhookAsync(WebHookDetails webHookDetails);
+  Task<WebhookUser> CreateWebhookUserAsync(
+    string webhookUrl,
+    CancellationToken cancellationToken = default
+  );
+  Task<WebhookUser> GetWebhookUserAsync(
+    Guid userUuid,
+    CancellationToken cancellationToken = default
+  );
+  Task<WebhookUser> CreateOrUpdateWebhookUserAsync(
+    Guid uuid,
+    string webhookUrl,
+    IEnumerable<string> events,
+    CancellationToken cancellationToken = default
+  );
+  Task RegisterEventAsync(
+    Guid uuid,
+    string eventName,
+    CancellationToken cancellationToken = default
+  );
+  Task UnregisterEventAsync(
+    Guid uuid,
+    string eventName,
+    CancellationToken cancellationToken = default
+  );
+  Task ProcessWebhookAsync(
+    WebHookDetails webHookDetails,
+    CancellationToken cancellationToken = default
+  );
+  Task SendWebhookAsync(
+    WebHookDetails webHookDetails,
+    CancellationToken cancellationToken = default
+  );
 }
 
 public class WebhookService : IWebhookService
@@ -31,19 +59,57 @@ public class WebhookService : IWebhookService
     _queueService = queueService;
   }
 
-  public async Task<WebhookUser> CreateWebhookUserAsync(string webhookUrl, CancellationToken cancellationToken = default)
+  public async Task<WebhookUser> CreateWebhookUserAsync(
+    string webhookUrl,
+    CancellationToken cancellationToken = default
+  )
   {
-    var webhookUser = await _webhookRepository.CreateWebhookUserAsync(webhookUrl);
+    var webhookUser = await _webhookRepository.CreateWebhookUserAsync(webhookUrl, cancellationToken);
     return webhookUser;
   }
 
-  public async Task<WebhookUser> GetWebhookUserAsync(Guid userUuid, CancellationToken cancellationToken = default)
+  public async Task<WebhookUser> GetWebhookUserAsync(
+    Guid userUuid,
+    CancellationToken cancellationToken = default
+  )
   {
-    var webhookUser = await _webhookRepository.TryGetWebhookUserAsync(userUuid) ?? throw new Exception("Webhook user not found");
+    var webhookUser = await _webhookRepository.TryGetWebhookUserAsync(userUuid, cancellationToken) ?? throw new Exception("Webhook user not found");
     return webhookUser;
   }
 
-  public async Task ProcessWebhookAsync(WebHookDetails webHookDetails, CancellationToken cancellationToken = default)
+  public async Task<WebhookUser> CreateOrUpdateWebhookUserAsync(
+    Guid uuid,
+    string webhookUrl,
+    IEnumerable<string> events,
+    CancellationToken cancellationToken = default
+  )
+  {
+    var webhookUser = await _webhookRepository.CreateOrUpdateWebhookUserAsync(uuid, webhookUrl, events, cancellationToken);
+    return webhookUser;
+  }
+
+  public async Task RegisterEventAsync(
+    Guid uuid,
+    string eventName,
+    CancellationToken cancellationToken = default
+  )
+  {
+    await _webhookRepository.RegisterEventAsync(uuid, eventName, cancellationToken);
+  }
+
+  public async Task UnregisterEventAsync(
+    Guid uuid,
+    string eventName,
+    CancellationToken cancellationToken = default
+  )
+  {
+    await _webhookRepository.UnregisterEventAsync(uuid, eventName, cancellationToken);
+  }
+
+  public async Task ProcessWebhookAsync(
+    WebHookDetails webHookDetails,
+    CancellationToken cancellationToken = default
+  )
   {
     var webhookUser = await GetWebhookUserAsync(webHookDetails.UserUuid, cancellationToken);
     var content = new StringContent(JsonSerializer.Serialize(webHookDetails), Encoding.UTF8, "application/json");
@@ -54,8 +120,15 @@ public class WebhookService : IWebhookService
     }
   }
 
-  public void SendWebhookAsync(WebHookDetails webHookDetails)
+  public async Task SendWebhookAsync(
+    WebHookDetails webHookDetails,
+    CancellationToken cancellationToken = default
+  )
   {
-    _queueService.EnqueueWebhook(webHookDetails);
+    var webhookUser = await GetWebhookUserAsync(webHookDetails.UserUuid, cancellationToken);
+    if (webhookUser.Events.Contains(webHookDetails.Event.ToString()))
+    {
+      _queueService.EnqueueWebhook(webHookDetails);
+    }
   }
 }
