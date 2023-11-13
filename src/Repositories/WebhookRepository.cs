@@ -77,14 +77,14 @@ public class WebhookRepository : IWebhookRepository
       {
         Uuid = uuid,
         WebhookUrl = webhookUrl,
-        Events = events
+        Events = events.ToList()
       };
       _context.WebhookUsers.Add(webhookUser);
     }
     else
     {
       webhookUser.WebhookUrl = webhookUrl;
-      webhookUser.Events = events;
+      webhookUser.Events = events.ToList();
     }
     await _context.SaveChangesAsync(cancellationToken);
     return webhookUser;
@@ -104,7 +104,7 @@ public class WebhookRepository : IWebhookRepository
         return;
       }
 
-      webhookUser.Events = webhookUser.Events.Append(eventName);
+      webhookUser.Events.Add(eventName);
       await _context.SaveChangesAsync(cancellationToken);
     }
   }
@@ -118,7 +118,7 @@ public class WebhookRepository : IWebhookRepository
     var webhookUser = await _context.WebhookUsers.FirstOrDefaultAsync(wu => wu.Uuid == uuid, cancellationToken: cancellationToken);
     if (webhookUser is not null)
     {
-      webhookUser.Events = webhookUser.Events.Where(e => e != eventName);
+      webhookUser.Events.Remove(eventName);
       await _context.SaveChangesAsync(cancellationToken);
     }
   }

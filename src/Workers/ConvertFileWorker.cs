@@ -26,6 +26,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         var rawSubtitlesService = scope.ServiceProvider.GetRequiredService<IRawSubtitlesService>();
         var convertedVideoService = scope.ServiceProvider.GetRequiredService<IConvertedVideosService>();
         var convertedSubtitleService = scope.ServiceProvider.GetRequiredService<IConvertedSubtitleService>();
+        var webhookService = scope.ServiceProvider.GetRequiredService<IWebhookService>();
 
         return fileToConvert.FileType switch
         {
@@ -33,6 +34,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
                 ConvertRawVideoAsync(
                     rawVideosService,
                     convertedVideoService,
+                    webhookService,
                     fileToConvert.Id,
                     cancellationToken
                 ),
@@ -40,6 +42,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
                 ConvertRawSubtitleAsync(
                     rawSubtitlesService,
                     convertedSubtitleService,
+                    webhookService,
                     fileToConvert.Id,
                     cancellationToken
                 ),
@@ -50,53 +53,76 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     private static async Task ConvertRawVideoAsync(
         IRawVideoService rawVideosService,
         IConvertedVideosService convertedVideoService,
+        IWebhookService webhookService,
         int id,
         CancellationToken cancellationToken = default
     )
     {
+        var rawFile = await rawVideosService.GetAsync(id, cancellationToken);
         try
         {
-            var rawFile = await rawVideosService.GetAsync(id, cancellationToken);
             await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
             var stream = await rawVideosService.ConvertToMp4Async(id, cancellationToken);
             await convertedVideoService.SaveConvertedVideoAsync(stream, id, cancellationToken);
             await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
-            // _queueService.EnqueueWebhook(new()
-            // {
-            //     UserUuid = rawFile.UserUuid,
-            //     WebhookType = WebhookType.VideoConversionFinished,
-            // });
+            await webhookService.SendWebhookAsync(
+                new()
+                {
+                    UserUuid = rawFile.UserUuid,
+                    Event = WebhookEvent.VideoConversionFinished,
+                },
+                cancellationToken
+            );
         }
         catch
         {
             await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
-            throw;
+            await webhookService.SendWebhookAsync(
+                new()
+                {
+                    UserUuid = rawFile.UserUuid,
+                    Event = WebhookEvent.VideoConversionError,
+                },
+                cancellationToken
+            );
         }
     }
 
     private static async Task ConvertRawSubtitleAsync(
         IRawSubtitlesService rawSubtitlesService,
         IConvertedSubtitleService convertedSubtitleService,
+        IWebhookService webhookService,
         int id,
         CancellationToken cancellationToken = default
     )
     {
+        var rawSubtitle = await rawSubtitlesService.GetAsync(id, cancellationToken);
         try
         {
-            var rawSubtitle = await rawSubtitlesService.GetAsync(id, cancellationToken);
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
             var stream = await rawSubtitlesService.ConvertToVttAsync(id, cancellationToken);
             await convertedSubtitleService.SaveConvertedSubtitleAsync(stream, id, cancellationToken);
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converted, cancellationToken);
-            // _queueService.EnqueueWebhook(new()
-            // {
-            //     UserUuid = rawSubtitle.UserUuid,
-            //     WebhookType = WebhookType.SubtitleConversionFinished,
-            // });
+            await webhookService.SendWebhookAsync(
+                new()
+                {
+                    UserUuid = rawSubtitle.UserUuid,
+                    Event = WebhookEvent.SubtitleConversionFinished,
+                },
+                cancellationToken
+            );
         }
         catch
         {
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
+            await webhookService.SendWebhookAsync(
+                new()
+                {
+                    UserUuid = rawSubtitle.UserUuid,
+                    Event = WebhookEvent.SubtitleConversionError,
+                },
+                cancellationToken
+            );
         }
     }
 }

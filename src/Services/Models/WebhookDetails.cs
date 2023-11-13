@@ -6,6 +6,8 @@ public enum WebhookEvent
 {
   VideoConversionFinished,
   SubtitleConversionFinished,
+  VideoConversionError,
+  SubtitleConversionError,
 }
 
 public class WebHookDetails
