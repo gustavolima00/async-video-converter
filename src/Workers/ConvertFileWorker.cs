@@ -97,7 +97,6 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         catch
         {
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
-            throw;
         }
     }
 }

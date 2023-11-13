@@ -90,7 +90,7 @@ public class RawSubtitlesService : IRawSubtitlesService
             {
                 Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
-                Language = language,
+                Language = language ?? "und",
                 RawVideoId = rawVideo.Id,
                 UserUuid = rawVideo.UserUuid
             }

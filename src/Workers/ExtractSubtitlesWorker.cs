@@ -16,7 +16,7 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
         IServiceScopeFactory serviceScopeFactory
     ) : base(logger, queueService, serviceScopeFactory)
     {
-        _queueUrl = queuesConfiguration.WebhookQueueName;
+        _queueUrl = queuesConfiguration.ExtractSubtitlesQueueName;
     }
     protected override string QueueUrl => _queueUrl;
     protected override Task ProcessMessage(
