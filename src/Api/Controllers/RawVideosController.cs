@@ -21,7 +21,7 @@ public class RawVideosController : ControllerBase
         _rawSubtitlesService = rawSubtitlesService;
     }
 
-    [HttpPost("send-video")]
+    [HttpPut("send-video")]
     public async Task<IActionResult> SendVideoToConversion(
         [Required] IFormFile file,
         [FromQuery, Required] string fileName,
@@ -31,8 +31,8 @@ public class RawVideosController : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var fileDetails = await _rawVideosService.SaveAsync(userUuid, stream, fileName, cancellationToken);
-            return Ok(fileDetails);
+            var rawVideo = await _rawVideosService.SaveAsync(userUuid, stream, fileName, cancellationToken);
+            return Ok(rawVideo);
         }
         catch (ServicesException e)
         {
@@ -44,7 +44,7 @@ public class RawVideosController : ControllerBase
         }
     }
 
-    [HttpPost("send-subtitle")]
+    [HttpPut("send-subtitle")]
     public async Task<IActionResult> SendSubtitleToConversion(
         [Required] IFormFile file,
         [FromQuery, Required] string language,
@@ -54,11 +54,6 @@ public class RawVideosController : ControllerBase
     {
         try
         {
-            if (file == null || file.Length == 0)
-            {
-                return BadRequest("Arquivo não enviado ou está vazio.");
-            }
-
             using var stream = file.OpenReadStream();
             var rawVideo = await _rawSubtitlesService.SaveAsync(userUuid, stream, language, rawVideoName, cancellationToken);
             return Ok(rawVideo);
