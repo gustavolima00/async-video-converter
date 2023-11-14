@@ -18,11 +18,26 @@ public static class Register
         return typeConfig;
     }
 
+
+    private static ClientsConfiguration BuildClientsConfiguration(IConfiguration configuration)
+    {
+        var clientsConfiguration = GetConfiguration<ClientsConfiguration>(configuration);
+        var blobStorageUrl = Environment.GetEnvironmentVariable("BLOB_STORAGE_URL");
+        if (!string.IsNullOrEmpty(blobStorageUrl))
+        {
+            clientsConfiguration.BlobStorageClientConfiguration.BlobStorageUrl = blobStorageUrl;
+        }
+
+        Console.WriteLine($"BlobStorageUrl: {clientsConfiguration.BlobStorageClientConfiguration.BlobStorageUrl}");
+
+        return clientsConfiguration;
+    }
+
     public static IServiceCollection RegisterServices(
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        services.RegisterClients(GetConfiguration<ClientsConfiguration>(configuration));
+        services.RegisterClients(BuildClientsConfiguration(configuration));
         services.RegisterRepositoriesProject(GetConfiguration<PostgresConfiguration>(configuration));
         services.RegisterServicesProject(GetConfiguration<QueuesConfiguration>(configuration));
 
