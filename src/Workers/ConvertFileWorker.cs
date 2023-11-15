@@ -10,6 +10,8 @@ namespace Workers;
 public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 {
     readonly string _queueUrl;
+    ILogger<ConvertFileWorker> _logger;
+
     public ConvertFileWorker(
         ILogger<ConvertFileWorker> logger,
         IQueueService queueService,
@@ -18,6 +20,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     ) : base(logger, queueService, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.ConvertQueueName;
+        _logger = logger;
     }
     protected override string QueueUrl => _queueUrl;
     protected override Task ProcessMessage(IServiceScope scope, FileToConvert fileToConvert, CancellationToken cancellationToken)
@@ -50,7 +53,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         };
     }
 
-    private static async Task ConvertRawVideoAsync(
+    private async Task ConvertRawVideoAsync(
         IRawVideoService rawVideosService,
         IConvertedVideosService convertedVideoService,
         IWebhookService webhookService,
@@ -74,8 +77,9 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
                 cancellationToken
             );
         }
-        catch
+        catch (Exception e)
         {
+            _logger.LogError(e, "Error converting video");
             await rawVideosService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
             await webhookService.SendWebhookAsync(
                 new()
@@ -88,7 +92,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
         }
     }
 
-    private static async Task ConvertRawSubtitleAsync(
+    private async Task ConvertRawSubtitleAsync(
         IRawSubtitlesService rawSubtitlesService,
         IConvertedSubtitleService convertedSubtitleService,
         IWebhookService webhookService,
@@ -112,8 +116,9 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
                 cancellationToken
             );
         }
-        catch
+        catch(Exception e)
         {
+            _logger.LogError(e, "Error converting subtitle");
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Error, cancellationToken);
             await webhookService.SendWebhookAsync(
                 new()

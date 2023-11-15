@@ -38,6 +38,10 @@ public class MediaService : IMediaService
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var fileExtension = Path.GetExtension(path);
+        if (fileExtension == ".mp4")
+        {
+            return fileStream;
+        }
         var mp4Stream = await _ffmpegClient.ConvertToMp4(fileStream, fileExtension, cancellationToken);
         return mp4Stream;
     }
