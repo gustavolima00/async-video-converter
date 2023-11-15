@@ -1,11 +1,33 @@
 version: "3.8"
-
 services:
-  api:
+  app:
     build: .
-    ports:
-      - "8080:80"
     environment:
-      - ASPNETCORE_ENVIRONMENT=Development
+      BLOB_STORAGE_URL: blob-storage:5000
+      RABBITMQ_HOSTNAME: rabbitmq
+      DIRECTORY_WITH_FFMPEG_AND_FFPROBE: "/usr/bin"
+      POSTGRES_CONNECTION_STRING: "Host=postgres;Database=file_converter;Username=postgres;Password=postgres"
+    depends_on:
+      - rabbitmq
+      - postgres
+      - blob-storage
+  rabbitmq:
+    image: rabbitmq:latest
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: file_converter
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+
+  blob-storage:
+    image: gustavolim00/blob-storage:1.1
+    ports:
+      - "5000:5000"
+    environment:
+      - BASE_FOLDER_PATH=/dados
     volumes:
-      - ~/.aspnet/https:/https:ro
+      - ./files:/dados

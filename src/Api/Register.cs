@@ -28,9 +28,33 @@ public static class Register
             clientsConfiguration.BlobStorageClientConfiguration.BlobStorageUrl = blobStorageUrl;
         }
 
-        Console.WriteLine($"BlobStorageUrl: {clientsConfiguration.BlobStorageClientConfiguration.BlobStorageUrl}");
+        var rabbitMQHostname = Environment.GetEnvironmentVariable("RABBITMQ_HOSTNAME");
+        if (!string.IsNullOrEmpty(rabbitMQHostname))
+        {
+            clientsConfiguration.RabbitMQClientConfiguration.Hostname = rabbitMQHostname;
+        }
 
+        var directoryWithFFmpegAndFFprobe = Environment.GetEnvironmentVariable("DIRECTORY_WITH_FFMPEG_AND_FFPROBE");
+        if (!string.IsNullOrEmpty(directoryWithFFmpegAndFFprobe))
+        {
+            clientsConfiguration.FFmpegClientConfiguration.DirectoryWithFFmpegAndFFprobe = directoryWithFFmpegAndFFprobe;
+        }
+
+        Console.WriteLine($"BlobStorageUrl: {clientsConfiguration.BlobStorageClientConfiguration.BlobStorageUrl}");
+        Console.WriteLine($"RabbitMQHostname: {clientsConfiguration.RabbitMQClientConfiguration.Hostname}");
+        Console.WriteLine($"DirectoryWithFFmpegAndFFprobe: {clientsConfiguration.FFmpegClientConfiguration.DirectoryWithFFmpegAndFFprobe}");
         return clientsConfiguration;
+    }
+
+    private static PostgresConfiguration BuildPostgresConfiguration(IConfiguration configuration)
+    {
+        var postgresConfiguration = GetConfiguration<PostgresConfiguration>(configuration);
+        var postgresUrl = Environment.GetEnvironmentVariable("POSTGRES_CONNECTION_STRING");
+        if (!string.IsNullOrEmpty(postgresUrl))
+        {
+            postgresConfiguration.ConnectionString = postgresUrl;
+        }
+        return postgresConfiguration;
     }
 
     public static IServiceCollection RegisterServices(
@@ -38,7 +62,7 @@ public static class Register
         IConfiguration configuration)
     {
         services.RegisterClients(BuildClientsConfiguration(configuration));
-        services.RegisterRepositoriesProject(GetConfiguration<PostgresConfiguration>(configuration));
+        services.RegisterRepositoriesProject(BuildPostgresConfiguration(configuration));
         services.RegisterServicesProject(GetConfiguration<QueuesConfiguration>(configuration));
 
         services.AddWorkers();
