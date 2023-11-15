@@ -7,10 +7,8 @@ RUN dotnet publish -c Release -o out
 
 # Etapa final
 FROM mcr.microsoft.com/dotnet/aspnet:6.0
+RUN apt-get update && apt-get install -y ffmpeg
 WORKDIR /app
 COPY --from=build-env /app/out .
-
-# Instalação do ffmpeg e ffprobe
-RUN apt-get update && apt-get install -y ffmpeg
 
 ENTRYPOINT ["dotnet", "Api.dll"]

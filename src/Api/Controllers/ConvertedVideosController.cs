@@ -15,7 +15,7 @@ public class ConvertedVideosController : ControllerBase
         _webVideoService = webVideoService;
     }
 
-    [HttpGet("")]
+    [HttpGet]
     public async Task<IActionResult> ListConvertedVideos(CancellationToken cancellationToken)
     {
         try

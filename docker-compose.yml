@@ -3,7 +3,7 @@ services:
   app:
     build: .
     environment:
-      BLOB_STORAGE_URL: blob-storage:5000
+      BLOB_STORAGE_URL: http://blob-storage:5000
       RABBITMQ_HOSTNAME: rabbitmq
       DIRECTORY_WITH_FFMPEG_AND_FFPROBE: "/usr/bin"
       POSTGRES_CONNECTION_STRING: "Host=postgres;Database=file_converter;Username=postgres;Password=postgres"
@@ -11,6 +11,10 @@ services:
       - rabbitmq
       - postgres
       - blob-storage
+    restart: always
+    ports:
+      - "5001:80"
+
   rabbitmq:
     image: rabbitmq:latest
     ports:
@@ -18,6 +22,8 @@ services:
       - "15672:15672"
   postgres:
     image: postgres:latest
+    ports:
+      - "5432:5432"
     environment:
       POSTGRES_DB: file_converter
       POSTGRES_USER: postgres
