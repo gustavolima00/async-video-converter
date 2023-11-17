@@ -7,9 +7,8 @@ namespace Repositories;
 public interface IConvertedVideosRepository
 {
     Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default);
+    Task<ConvertedVideo> GetOrCreateByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
-    Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
 
     // Subtitles
     Task<ConvertedSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
@@ -34,10 +33,13 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
 
     public async Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default)
     {
-        return await _context.ConvertedVideos.Include(rf => rf.Subtitles).ToListAsync(cancellationToken);
+        return await _context.ConvertedVideos
+            .Include(rf => rf.Subtitles)
+            .Include(rf => rf.Streams)
+            .ToListAsync(cancellationToken);
     }
 
-    public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default)
+    private async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default)
     {
         using var transaction = _context.TryBeginTransaction();
 
@@ -64,9 +66,21 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
         }
     }
 
-    public async Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
+    private async Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
         return await _context.ConvertedVideos.FirstOrDefaultAsync(rf => rf.RawVideoId == rawVideoId, cancellationToken);
+    }
+
+    public async Task<ConvertedVideo> GetOrCreateByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
+    {
+        var convertedVideo = await TryGetByRawVideoIdAsync(rawVideoId, cancellationToken);
+
+        convertedVideo ??= await CreateOrReplaceAsync(new()
+        {
+            RawVideoId = rawVideoId
+        }, cancellationToken);
+
+        return convertedVideo;
     }
 
     // Subtitles

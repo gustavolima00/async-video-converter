@@ -43,9 +43,6 @@ public class ConvertedVideosService : IConvertedVideosService
 
     public async Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
-        await _convertedVideosRepository.CreateOrReplaceAsync(new()
-        {
-            RawVideoId = rawFileId
-        }, cancellationToken);
+        await _convertedVideosRepository.GetOrCreateByRawVideoIdAsync(rawFileId, cancellationToken);
     }
 }

@@ -23,4 +23,5 @@ public class RawVideo
     public Guid UserUuid { get; set; }
     public virtual ICollection<RawSubtitle> Subtitles { get; set; } = null!;
 
+    public virtual ConvertedVideo ConvertedVideo { get; set; } = null!;
 }
