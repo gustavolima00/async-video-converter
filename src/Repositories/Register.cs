@@ -14,6 +14,7 @@ public static class Register
         services.AddScoped<IWebhookRepository, WebhookRepository>();
         services.AddScoped<IRawVideosRepository, RawVideosRepository>();
         services.AddScoped<IConvertedVideosRepository, ConvertedVideosRepository>();
+        services.AddScoped<IConvertedVideoTracksRepository, ConvertedVideoTracksRepository>();
         return services;
     }
 }

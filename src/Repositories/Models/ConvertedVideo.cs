@@ -15,5 +15,5 @@ public class ConvertedVideo
 
     public ICollection<ConvertedSubtitle> Subtitles { get; set; } = null!;
 
-    public ICollection<ConvertedVideoStream> Streams { get; set; } = null!;
+    public ICollection<ConvertedVideoTrack> Streams { get; set; } = null!;
 }

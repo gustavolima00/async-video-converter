@@ -3,8 +3,8 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Repositories.Models;
 
-[Table("converted_video_streams")]
-public class ConvertedVideoStream
+[Table("converted_video_tracks")]
+public class ConvertedVideoTrack
 {
     [Column("id")]
     public int Id { get; set; }
