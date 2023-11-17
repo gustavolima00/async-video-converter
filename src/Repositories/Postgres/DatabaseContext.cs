@@ -7,7 +7,6 @@ public class DatabaseContext : DbContext
 {
   public DbSet<WebhookUser> WebhookUsers { get; set; }
   public DbSet<RawVideo> RawVideos { get; set; }
-  public DbSet<RawSubtitle> RawSubtitles { get; set; }
   public DbSet<ConvertedVideo> ConvertedVideos { get; set; }
   public DbSet<ConvertedSubtitle> ConvertedSubtitles { get; set; }
   public DbSet<ConvertedVideoTrack> ConvertedVideoTracks { get; set; }
@@ -25,7 +24,6 @@ public class DatabaseContext : DbContext
   {
     modelBuilder.Entity<WebhookUser>();
     modelBuilder.Entity<RawVideo>();
-    modelBuilder.Entity<RawSubtitle>();
     modelBuilder.Entity<ConvertedVideo>();
     modelBuilder.Entity<ConvertedSubtitle>();
     modelBuilder.Entity<ConvertedVideoTrack>();

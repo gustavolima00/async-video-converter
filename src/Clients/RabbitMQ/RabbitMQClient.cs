@@ -26,8 +26,19 @@ public class RabbitMQClient : IRabbitMQClient
 
     public IConnection CreateConnection()
     {
-        var factory = new ConnectionFactory() { HostName = _configuration.Hostname };
-        return factory.CreateConnection();
+        for (var i = 0; i < _configuration.ConnectionRetry; i++)
+        {
+            try
+            {
+                var factory = new ConnectionFactory() { HostName = _configuration.Hostname };
+                return factory.CreateConnection();
+            }
+            catch (Exception)
+            {
+                Thread.Sleep(_configuration.ConnectionRetryDelay);
+            }
+        }
+        throw new Exception("Could not connect to RabbitMQ");
     }
 
     public IModel CreateModel()

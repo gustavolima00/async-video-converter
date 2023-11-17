@@ -19,18 +19,6 @@ create table raw_videos(
         on delete set null
 );
 
-create table raw_subtitles(
-    id serial primary key,
-    language varchar(255),
-    path varchar(255) not null,
-    raw_video_id int not null,
-
-    constraint fk_videos_raw_videos
-        foreign key (raw_video_id)
-        references raw_videos(id)
-        on delete cascade
-);
-
 create table converted_videos(
     id serial primary key,
     raw_video_id int not null unique,
@@ -55,18 +43,12 @@ create table converted_video_tracks(
 create table converted_subtitles(
     id serial primary key,
     converted_video_id int not null,
-    raw_subtitle_id int null unique,
     path varchar (255) not null,
     language varchar(255) not null,
     link varchar(255) not null unique,
     constraint fk_converted_subtitles_converted_videos
         foreign key (converted_video_id)
         references converted_videos(id)
-        on delete cascade,
-
-    constraint fk_converted_video_subtitles_raw_subtitles
-        foreign key (raw_subtitle_id)
-        references raw_subtitles(id)
         on delete cascade
 );
 

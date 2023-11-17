@@ -11,8 +11,6 @@ public class ConvertedSubtitle
 
     [Column("converted_video_id")]
     public int ConvertedVideoId { get; set; }
-    [Column("raw_subtitle_id")]
-    public int RawSubtitleId { get; set; }
 
     [Column("path")]
     public string Path { get; set; } = "";
