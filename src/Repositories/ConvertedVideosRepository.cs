@@ -7,7 +7,7 @@ namespace Repositories;
 public interface IConvertedVideosRepository
 {
     Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default);
-    Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default);
+    Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
 
@@ -37,25 +37,25 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
         return await _context.ConvertedVideos.Include(rf => rf.Subtitles).ToListAsync(cancellationToken);
     }
 
-    public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default)
+    public async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default)
     {
         using var transaction = _context.TryBeginTransaction();
 
         try
         {
-            var existingFile = await _context.ConvertedVideos.SingleOrDefaultAsync(rf => rf.Path == webVideo.Path, cancellationToken);
+            var existingFile = await _context.ConvertedVideos.SingleOrDefaultAsync(rf => rf.RawVideoId == convertedVideo.RawVideoId, cancellationToken);
 
             if (existingFile is not null)
             {
                 _context.ConvertedVideos.Remove(existingFile);
             }
 
-            await _context.ConvertedVideos.AddAsync(webVideo, cancellationToken);
+            await _context.ConvertedVideos.AddAsync(convertedVideo, cancellationToken);
             await _context.SaveChangesAsync(cancellationToken);
 
             await transaction.TryCommitAsync(cancellationToken);
 
-            return webVideo;
+            return convertedVideo;
         }
         catch
         {

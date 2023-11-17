@@ -38,11 +38,11 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
         var rawSubtitle = await _rawVideosRepository.TryGetSubtitleByIdAsync(rawSubtitleId, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw subtitle with id {rawSubtitleId} not found");
         var rawVideo = await _rawVideosRepository.TryGetByIdAsync(rawSubtitle.RawVideoId, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw video with id {rawSubtitle.RawVideoId} not found");
         var convertedVideo = await _convertedVideosRepository.TryGetByRawVideoIdAsync(rawVideo.Id, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Converted video with raw video id {rawVideo.Id} not found");
-        var folderPath = $"{rawSubtitle.UserUuid}/converted_subtitles";
-        var fileName = $"{Path.GetFileNameWithoutExtension(rawSubtitle.Name)}.vtt";
+        var folderPath = $"{rawVideo.UserUuid}/converted_subtitles";
+        var fileName = $"{Path.GetFileNameWithoutExtension(rawVideo.Name)}_{rawSubtitle.Language}.vtt";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(stream, fileName, folderPath, cancellationToken);
         string subtitleLink = _blobStorageClient.GetLinkFromPath(fileMetadata.Path);
-        var subtitle = await _convertedVideosRepository.CreateOrReplaceConvertedSubtitleAsync(new()
+        await _convertedVideosRepository.CreateOrReplaceConvertedSubtitleAsync(new()
         {
             ConvertedVideoId = convertedVideo.Id,
             RawSubtitleId = rawSubtitleId,

@@ -10,6 +10,7 @@ public class DatabaseContext : DbContext
   public DbSet<RawSubtitle> RawSubtitles { get; set; }
   public DbSet<ConvertedVideo> ConvertedVideos { get; set; }
   public DbSet<ConvertedSubtitle> ConvertedSubtitles { get; set; }
+  public DbSet<ConvertedVideoStream> ConvertedVideoStreams { get; set; }
 
   private readonly PostgresConfiguration _configuration;
 
@@ -27,6 +28,7 @@ public class DatabaseContext : DbContext
     modelBuilder.Entity<RawSubtitle>();
     modelBuilder.Entity<ConvertedVideo>();
     modelBuilder.Entity<ConvertedSubtitle>();
+    modelBuilder.Entity<ConvertedVideoStream>();
   }
 
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

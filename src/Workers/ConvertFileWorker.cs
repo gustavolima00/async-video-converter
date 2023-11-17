@@ -44,6 +44,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             FileType.RawSubtitle =>
                 ConvertRawSubtitleAsync(
                     rawSubtitlesService,
+                    rawVideosService,
                     convertedSubtitleService,
                     webhookService,
                     fileToConvert.Id,
@@ -94,6 +95,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
 
     private async Task ConvertRawSubtitleAsync(
         IRawSubtitlesService rawSubtitlesService,
+        IRawVideoService rawVideosService,
         IConvertedSubtitleService convertedSubtitleService,
         IWebhookService webhookService,
         int id,
@@ -101,6 +103,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
     )
     {
         var rawSubtitle = await rawSubtitlesService.GetAsync(id, cancellationToken);
+        var rawVideo = await rawVideosService.GetAsync(rawSubtitle.RawVideoId, cancellationToken);
         try
         {
             await rawSubtitlesService.UpdateConversionStatusAsync(id, ConversionStatus.Converting, cancellationToken);
@@ -110,7 +113,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             await webhookService.SendWebhookAsync(
                 new()
                 {
-                    UserUuid = rawSubtitle.UserUuid,
+                    UserUuid = rawVideo.UserUuid,
                     Event = WebhookEvent.SubtitleConversionFinished,
                 },
                 cancellationToken
@@ -123,7 +126,7 @@ public class ConvertFileWorker : BaseQueueWorker<FileToConvert>
             await webhookService.SendWebhookAsync(
                 new()
                 {
-                    UserUuid = rawSubtitle.UserUuid,
+                    UserUuid = rawVideo.UserUuid,
                     Event = WebhookEvent.SubtitleConversionError,
                 },
                 cancellationToken

@@ -9,9 +9,6 @@ public class RawSubtitle
     [Column("id")]
     public int Id { get; set; }
 
-    [Column("name")]
-    public string Name { get; set; } = "";
-
     [Column("language")]
     public string Language { get; set; } = "";
 
@@ -21,9 +18,6 @@ public class RawSubtitle
     [Column("conversion_status", TypeName = "varchar(255)")]
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
-
-    [Column("user_uuid")]
-    public Guid UserUuid { get; set; }
 
     [Column("raw_video_id")]
     public int RawVideoId { get; set; }

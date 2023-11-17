@@ -38,6 +38,35 @@ public class FFmpegClient : IFFmpegClient
         return await Xabe.FFmpeg.FFmpeg.GetMediaInfo(path, cancellationToken);
     }
 
+    // public static async Task ExtractAudioTracksAndConvert(string inputPath, CancellationToken cancellationToken = default)
+    // {
+    //     var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(inputPath, cancellationToken);
+
+    //     int trackIndex = 0;
+    //     foreach (var audioStream in mediaInfo.AudioStreams)
+    //     {
+    //         string outputPath = Path.Combine(
+    //             Path.GetDirectoryName(inputPath),
+    //             $"{Path.GetFileNameWithoutExtension(inputPath)}_track{trackIndex}.mp4");
+
+    //         var conversion = Xabe.FFmpeg.FFmpeg.Conversions.New()
+    //             // Copia o vídeo como está.
+    //             .AddStream(mediaInfo.VideoStreams)
+    //             // Seleciona a faixa de áudio específica.
+    //             .AddStream(audioStream)
+    //             // Define o codec de vídeo para copiar diretamente sem reencode (para velocidade).
+    //             .SetVideoCodec(VideoCodec.Copy)
+    //             // Define o codec de áudio para copiar diretamente.
+    //             .SetAudioCodec(AudioCodec.Copy)
+    //             // Define o caminho do arquivo de saída.
+    //             .SetOutput(outputPath);
+
+    //         // Inicia a conversão.
+    //         await conversion.Start(cancellationToken);
+    //         trackIndex++;
+    //     }
+    // }
+
     public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
     {
         var conversion = await Xabe.FFmpeg.FFmpeg.Conversions.FromSnippet.Convert(inputPath, outputPath, true);

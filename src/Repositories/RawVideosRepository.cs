@@ -85,7 +85,7 @@ public class RawVideosRepository : IRawVideosRepository
         {
             var existingFile = await _context.RawSubtitles.FirstOrDefaultAsync(
                 rf => rf.Path == rawSubtitle.Path &&
-                rf.UserUuid == rawSubtitle.UserUuid,
+                rf.RawVideoId == rawSubtitle.RawVideoId,
                 cancellationToken);
 
             if (existingFile is not null)

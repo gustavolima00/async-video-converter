@@ -83,11 +83,9 @@ public class RawSubtitlesService : IRawSubtitlesService
         var rawSubtitle = await _rawFilesRepository.CreateOrReplaceRawSubtitleAsync(
             new RawSubtitle
             {
-                Name = fileMetadata.Name,
                 Path = fileMetadata.Path,
                 Language = language ?? "und",
                 RawVideoId = rawVideo.Id,
-                UserUuid = rawVideo.UserUuid
             }
             , cancellationToken);
         _queueService.EnqueueFileToConvert(new()
