@@ -2,7 +2,6 @@
 using Repositories;
 using Repositories.Models;
 using Services.Exceptions;
-using Services.Models;
 
 namespace Services;
 
@@ -23,16 +22,6 @@ public interface IRawSubtitlesService
 
     Task UpdateConversionStatusAsync(
         int id, ConversionStatus status,
-        CancellationToken cancellationToken = default
-    );
-
-    Task<Stream> ConvertToVttAsync(
-        int id,
-        CancellationToken cancellationToken = default
-    );
-
-    Task ExtractSubtitlesAsync(
-        int rawVideoId,
         CancellationToken cancellationToken = default
     );
 }
@@ -88,19 +77,7 @@ public class RawSubtitlesService : IRawSubtitlesService
                 RawVideoId = rawVideo.Id,
             }
             , cancellationToken);
-        _queueService.EnqueueFileToConvert(new()
-        {
-            Id = rawSubtitle.Id,
-            FileType = FileType.RawSubtitle
-        });
         return rawSubtitle;
-    }
-
-    public async Task<Stream> ConvertToVttAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var rawSubtitle = await _rawFilesRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new RawRawSubtitlesServiceException($"Raw subtitle with id {id} not found");
-        var vttStream = await _videoManagerService.ConvertSrtToVttAsync(rawSubtitle.Path, cancellationToken);
-        return vttStream;
     }
 
     public async Task<RawSubtitle> GetAsync(int id, CancellationToken cancellationToken = default)
@@ -112,17 +89,5 @@ public class RawSubtitlesService : IRawSubtitlesService
     public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
         await _rawFilesRepository.UpdateSubtitleConversionStatusAsync(id, status, cancellationToken);
-    }
-
-    public async Task ExtractSubtitlesAsync(int rawVideoId, CancellationToken cancellationToken = default)
-    {
-        var rawVideo = await _rawFilesRepository.TryGetByIdAsync(rawVideoId, cancellationToken) ?? throw new RawRawSubtitlesServiceException($"Raw file with id {rawVideoId} not found");
-        var userUuid = rawVideo.UserUuid;
-        var subtitles = await _videoManagerService.ExtractSubtitlesAsync(rawVideo.Path, cancellationToken);
-        var subtitleNamePrefix = Path.GetFileNameWithoutExtension(rawVideo.Name);
-        var subtitlesTasks = subtitles.Select(s =>
-            SaveAsync(s.Stream, s.Language, rawVideo, cancellationToken)
-        );
-        await Task.WhenAll(subtitlesTasks);
     }
 }

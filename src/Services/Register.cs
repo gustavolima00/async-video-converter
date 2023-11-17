@@ -13,7 +13,7 @@ public static class Register
         services.AddScoped<IRawVideoService, RawVideosService>();
         services.AddScoped<IRawSubtitlesService, RawSubtitlesService>();
         services.AddScoped<IMediaService, MediaService>();
-        services.AddScoped<IConvertedVideosService, ConvertedVideosService>();
+        services.AddScoped<IVideoConversionService, VideoConversionService>();
         services.AddScoped<IConvertedSubtitleService, ConvertedSubtitleService>();
         services.AddSingleton<IQueueService, QueueService>();
         services.AddScoped<IWebhookService, WebhookService>();

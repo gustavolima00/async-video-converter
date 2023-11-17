@@ -4,10 +4,10 @@ namespace Services.Models;
 
 public enum WebhookEvent
 {
-  VideoConversionFinished,
-  SubtitleConversionFinished,
-  VideoConversionError,
-  SubtitleConversionError,
+  VideoTracksExtracted,
+  SubtitleTracksExtracted,
+  VideoTrackExtractionFailed,
+  SubtitleTrackExtractionFailed,
 }
 
 public class WebHookDetails
@@ -17,6 +17,8 @@ public class WebHookDetails
   public WebhookEvent Event { get; set; }
 
   public Guid UserUuid { get; set; }
+  public string? Error { get; set; }
+  public string Payload { get; set; } = "";
 }
 
 

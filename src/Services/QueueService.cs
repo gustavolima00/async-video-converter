@@ -6,7 +6,7 @@ namespace Services;
 
 public interface IQueueService
 {
-    void EnqueueFileToConvert(FileToConvert fileToConvert);
+    void EnqueueVideoToExtractTracks(VideoToExtractVideoTracks videoToExtractTracks);
     void EnqueueVideoToExtractSubtitles(VideoToExtractSubtitles videoToExtractSubtitles);
     void EnqueueWebhook(WebHookDetails webhookDetails);
     void EnqueueMessage<T>(string queueName, T message);
@@ -29,9 +29,9 @@ public class QueueService : IQueueService
         _rabbitMQClient.SendMessage(queueName, message);
     }
 
-    public void EnqueueFileToConvert(FileToConvert fileToConvert)
+    public void EnqueueVideoToExtractTracks(VideoToExtractVideoTracks videoToExtractTracks)
     {
-        EnqueueMessage(_queuesConfiguration.ConvertQueueName, fileToConvert);
+        EnqueueMessage(_queuesConfiguration.ExtractVideoTracksQueueName, videoToExtractTracks);
     }
 
     public void EnqueueVideoToExtractSubtitles(VideoToExtractSubtitles videoToExtractSubtitles)

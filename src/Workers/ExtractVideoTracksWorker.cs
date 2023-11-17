@@ -6,22 +6,22 @@ using Services.Models;
 
 namespace Workers;
 
-public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
+public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTracks>
 {
     readonly string _queueUrl;
-    public ExtractSubtitlesWorker(
-        ILogger<ExtractSubtitlesWorker> logger,
+    public ExtractVideoTracksWorker(
+        ILogger<ExtractVideoTracksWorker> logger,
         IQueueService queueService,
         QueuesConfiguration queuesConfiguration,
         IServiceScopeFactory serviceScopeFactory
     ) : base(logger, queueService, serviceScopeFactory)
     {
-        _queueUrl = queuesConfiguration.ExtractSubtitlesQueueName;
+        _queueUrl = queuesConfiguration.ExtractVideoTracksQueueName;
     }
     protected override string QueueUrl => _queueUrl;
     protected override async Task ProcessMessage(
         IServiceScope scope,
-        VideoToExtractSubtitles videoToExtractSubtitles,
+        VideoToExtractVideoTracks data,
         CancellationToken cancellationToken
     )
     {
@@ -29,19 +29,19 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
         var webhookService = scope.ServiceProvider.GetRequiredService<IWebhookService>();
         try
         {
-            await videoConversionService.ExtractSubtitlesAsync(videoToExtractSubtitles.RawVideoId, cancellationToken);
+            await videoConversionService.ExtractVideoTracksAndConvertAsync(data.RawVideoId, cancellationToken);
             await webhookService.SendWebhookAsync(new()
             {
-                Event = WebhookEvent.SubtitleTracksExtracted,
-                UserUuid = videoToExtractSubtitles.UserUuid
+                Event = WebhookEvent.VideoTracksExtracted,
+                UserUuid = data.UserUuid
             }, cancellationToken);
         }
         catch (Exception e)
         {
             await webhookService.SendWebhookAsync(new()
             {
-                Event = WebhookEvent.SubtitleTrackExtractionFailed,
-                UserUuid = videoToExtractSubtitles.UserUuid,
+                Event = WebhookEvent.VideoTrackExtractionFailed,
+                UserUuid = data.UserUuid,
                 Error = e.Message
             }, cancellationToken);
             throw;

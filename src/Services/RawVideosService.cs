@@ -2,7 +2,6 @@
 using Repositories;
 using Repositories.Models;
 using Services.Exceptions;
-using Services.Models;
 
 namespace Services;
 
@@ -20,10 +19,6 @@ public interface IRawVideoService
         CancellationToken cancellationToken = default
     );
     Task<RawVideo> GetAsync(
-        int id,
-        CancellationToken cancellationToken = default
-    );
-    Task<Stream> ConvertToMp4Async(
         int id,
         CancellationToken cancellationToken = default
     );
@@ -66,14 +61,15 @@ public class RawVideosService : IRawVideoService
             }
             , cancellationToken);
 
-        _queueService.EnqueueFileToConvert(new()
+        _queueService.EnqueueVideoToExtractTracks(new()
         {
-            Id = rawFile.Id,
-            FileType = FileType.RawVideo
+            RawVideoId = rawFile.Id,
+            UserUuid = userUuid
         });
         _queueService.EnqueueVideoToExtractSubtitles(new()
         {
-            Id = rawFile.Id
+            RawVideoId = rawFile.Id,
+            UserUuid = userUuid
         });
         return rawFile;
     }
@@ -88,13 +84,6 @@ public class RawVideosService : IRawVideoService
     public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)
     {
         await _rawFilesRepository.UpdateConversionStatusAsync(id, status, cancellationToken);
-    }
-
-    public async Task<Stream> ConvertToMp4Async(int id, CancellationToken cancellationToken = default)
-    {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
-        var mp4Stream = await _videoManagerService.ConvertToMp4Async(rawFile.Path, cancellationToken);
-        return mp4Stream;
     }
 
     public async Task<RawVideo> GetAsync(int id, CancellationToken cancellationToken = default)

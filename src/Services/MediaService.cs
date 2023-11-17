@@ -8,7 +8,7 @@ namespace Services;
 public interface IMediaService
 {
     Task<Stream> ConvertToMp4Async(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
-    Task<Stream> ConvertSrtToVttAsync(string path, CancellationToken cancellationToken = default);
+    Task<Stream> ConvertSrtToVttAsync(Stream stream, CancellationToken cancellationToken = default);
     Task<IEnumerable<SubtitleInfo>> ExtractSubtitlesAsync(string path, CancellationToken cancellationToken = default);
     Task<IEnumerable<VideoTrackInfo>> ExtractVideoTracksAsync(string path, CancellationToken cancellationToken = default);
 }
@@ -30,10 +30,9 @@ public class MediaService : IMediaService
         return mp4Stream;
     }
 
-    public async Task<Stream> ConvertSrtToVttAsync(string path, CancellationToken cancellationToken = default)
+    public async Task<Stream> ConvertSrtToVttAsync(Stream stream, CancellationToken cancellationToken = default)
     {
-        var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
-        var vttStream = await _ffmpegClient.ConvertSrtToVtt(fileStream, cancellationToken);
+        var vttStream = await _ffmpegClient.ConvertSrtToVtt(stream, cancellationToken);
         return vttStream;
     }
 
