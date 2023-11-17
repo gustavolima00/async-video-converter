@@ -14,10 +14,6 @@ public interface IRawVideoService
         string fileName,
         CancellationToken cancellationToken = default
     );
-    Task FillMetadataAsync(
-        int id,
-        CancellationToken cancellationToken = default
-    );
     Task<RawVideo> GetAsync(
         Guid userUuid,
         string fileName,
@@ -70,11 +66,6 @@ public class RawVideosService : IRawVideoService
             }
             , cancellationToken);
 
-        _queueService.EnqueueFileToFillMetadata(new()
-        {
-            Id = rawFile.Id,
-            FileType = FileType.RawVideo
-        });
         _queueService.EnqueueFileToConvert(new()
         {
             Id = rawFile.Id,
@@ -92,13 +83,6 @@ public class RawVideosService : IRawVideoService
         string path = $"{userUuid}/raw_videos/{fileName}";
         var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
         return rawFile;
-    }
-
-    public async Task FillMetadataAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
-        var metadata = await _videoManagerService.GetFileMetadataAsync(rawFile.Path, cancellationToken);
-        await _rawFilesRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
     }
 
     public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)

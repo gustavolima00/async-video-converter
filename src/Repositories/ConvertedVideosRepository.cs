@@ -8,14 +8,12 @@ public interface IConvertedVideosRepository
 {
     Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo webVideo, CancellationToken cancellationToken = default);
-    Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
 
     // Subtitles
     Task<ConvertedSubtitle?> TryGetSubtitleByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<ConvertedSubtitle> CreateOrReplaceConvertedSubtitleAsync(ConvertedSubtitle convertedSubtitle, CancellationToken cancellationToken = default);
-    Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default);
 }
 
 public class ConvertedVideosRepository : IConvertedVideosRepository
@@ -66,13 +64,6 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
         }
     }
 
-    public async Task UpdateMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
-    {
-        var webVideo = await _context.ConvertedVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No web video with id {id} exists");
-        webVideo.Metadata = metadata;
-        await _context.SaveChangesAsync(cancellationToken);
-    }
-
     public async Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
         return await _context.ConvertedVideos.FirstOrDefaultAsync(rf => rf.RawVideoId == rawVideoId, cancellationToken);
@@ -112,12 +103,5 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
             await transaction.TryRollbackAsync(cancellationToken);
             throw;
         }
-    }
-
-    public async Task UpdateSubtitleMetadataAsync(int id, MediaMetadata metadata, CancellationToken cancellationToken = default)
-    {
-        var subtitle = await _context.ConvertedSubtitles.FindAsync(new object?[] { id }, cancellationToken: cancellationToken) ?? throw new ArgumentException($"No subtitle with id {id} exists");
-        subtitle.Metadata = metadata;
-        await _context.SaveChangesAsync(cancellationToken);
     }
 }

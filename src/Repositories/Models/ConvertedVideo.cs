@@ -22,9 +22,5 @@ public class ConvertedVideo
 
     public int RawVideoId { get; set; }
 
-    [Column("metadata")]
-
-    public MediaMetadata? Metadata { get; set; }
-
     public ICollection<ConvertedSubtitle> Subtitles { get; set; } = null!;
 }

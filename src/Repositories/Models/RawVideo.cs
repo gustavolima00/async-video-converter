@@ -19,9 +19,6 @@ public class RawVideo
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
 
-    [Column("metadata")]
-    public MediaMetadata? Metadata { get; set; }
-
     [Column("user_uuid")]
     public Guid UserUuid { get; set; }
     public virtual ICollection<RawSubtitle> Subtitles { get; set; } = null!;

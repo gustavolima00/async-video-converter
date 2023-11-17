@@ -6,7 +6,6 @@ public static class Register
 {
     public static void AddWorkers(this IServiceCollection services)
     {
-        services.AddHostedService<FillFileMetadataWorker>();
         services.AddHostedService<ConvertFileWorker>();
         services.AddHostedService<ExtractSubtitlesWorker>();
         services.AddHostedService<WebhookWorker>();

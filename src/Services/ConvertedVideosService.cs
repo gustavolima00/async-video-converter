@@ -8,7 +8,6 @@ namespace Services;
 
 public interface IConvertedVideosService
 {
-    Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task<IEnumerable<ConvertedVideo>> ListConvertedVideosAsync(CancellationToken cancellationToken = default);
     Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default);
 }
@@ -42,13 +41,6 @@ public class ConvertedVideosService : IConvertedVideosService
         return webVideos;
     }
 
-    public async Task FillFileMetadataAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var webVideo = await _convertedVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new ConvertedVideoServiceException($"Raw file with id {id} not found");
-        var metadata = await _mediaService.GetFileMetadataAsync(webVideo.Path, cancellationToken);
-        await _convertedVideosRepository.UpdateMetadataAsync(id, metadata, cancellationToken);
-    }
-
     public async Task SaveConvertedVideoAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawVideosRepository.TryGetByIdAsync(rawFileId, cancellationToken) ?? throw new ConvertedVideoServiceException($"Raw file with id {rawFileId} not found");
@@ -63,11 +55,5 @@ public class ConvertedVideosService : IConvertedVideosService
             Path = fileMetadata.Path,
             RawVideoId = rawFileId
         }, cancellationToken);
-
-        _queueService.EnqueueFileToFillMetadata(new()
-        {
-            Id = webVideo.Id,
-            FileType = FileType.ConvertedVideo
-        });
     }
 }

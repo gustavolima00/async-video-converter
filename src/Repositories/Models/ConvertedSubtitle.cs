@@ -22,7 +22,4 @@ public class ConvertedSubtitle
 
     [Column("link")]
     public string Link { get; set; } = "";
-
-    [Column("metadata")]
-    public MediaMetadata? Metadata { get; set; }
 }

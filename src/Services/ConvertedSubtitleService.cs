@@ -7,7 +7,6 @@ namespace Services;
 
 public interface IConvertedSubtitleService
 {
-    Task FillSubtitleMetadataAsync(int id, CancellationToken cancellationToken = default);
     Task SaveConvertedSubtitleAsync(Stream stream, int rawFileId, CancellationToken cancellationToken = default);
 }
 
@@ -34,13 +33,6 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
         _rawVideosRepository = rawFilesRepository;
     }
 
-    public async Task FillSubtitleMetadataAsync(int id, CancellationToken cancellationToken = default)
-    {
-        var convertedSubtitles = await _convertedVideosRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw file with id {id} not found");
-        var metadata = await _mediaService.GetFileMetadataAsync(convertedSubtitles.Path, cancellationToken);
-        await _convertedVideosRepository.UpdateSubtitleMetadataAsync(id, metadata, cancellationToken);
-    }
-
     public async Task SaveConvertedSubtitleAsync(Stream stream, int rawSubtitleId, CancellationToken cancellationToken = default)
     {
         var rawSubtitle = await _rawVideosRepository.TryGetSubtitleByIdAsync(rawSubtitleId, cancellationToken) ?? throw new ConvertedSubtitleServiceException($"Raw subtitle with id {rawSubtitleId} not found");
@@ -58,11 +50,5 @@ public class ConvertedSubtitleService : IConvertedSubtitleService
             Path = fileMetadata.Path,
             Language = rawSubtitle.Language
         }, cancellationToken);
-
-        _queueService.EnqueueFileToFillMetadata(new()
-        {
-            Id = subtitle.Id,
-            FileType = FileType.ConvertedSubtitle
-        });
     }
 }

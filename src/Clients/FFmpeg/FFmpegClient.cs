@@ -5,7 +5,6 @@ namespace Clients.FFmpeg;
 
 public interface IFFmpegClient
 {
-    Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
     Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
@@ -34,26 +33,9 @@ public class FFmpegClient : IFFmpegClient
         return tempFilePath;
     }
 
-    static async Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default)
+    private static async Task<IMediaInfo> GetFileMetadata(string path, CancellationToken cancellationToken = default)
     {
         return await Xabe.FFmpeg.FFmpeg.GetMediaInfo(path, cancellationToken);
-    }
-
-    public async Task<IMediaInfo> GetFileMetadata(Stream stream, string fileExtension, CancellationToken cancellationToken = default)
-    {
-        string? videoFilePath = null;
-        try
-        {
-            videoFilePath = await SaveStreamIntoTempFile(stream, fileExtension, cancellationToken);
-            return await GetFileMetadata(videoFilePath, cancellationToken);
-        }
-        finally
-        {
-            if (videoFilePath is not null)
-            {
-                File.Delete(videoFilePath);
-            }
-        }
     }
 
     public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
@@ -119,7 +101,7 @@ public class FFmpegClient : IFFmpegClient
         try
         {
             videoPath = await SaveStreamIntoTempFile(videoStream, "mp4", cancellationToken);
-            var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(videoPath);
+            var mediaInfo = await GetFileMetadata(videoPath, cancellationToken);
             var subtitleStreams = mediaInfo.SubtitleStreams;
             List<(ISubtitleStream metadata, Stream stream)> subtitles = new();
 

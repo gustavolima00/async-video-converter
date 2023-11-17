@@ -23,60 +23,10 @@ public class DatabaseContext : DbContext
   protected override void OnModelCreating(ModelBuilder modelBuilder)
   {
     modelBuilder.Entity<WebhookUser>();
-
-    modelBuilder.Entity<RawVideo>(entity =>
-    {
-      if (_configuration.UseInMemoryDatabase)
-      {
-        modelBuilder.Entity<RawVideo>().Ignore(rf => rf.Metadata);
-      }
-      else
-      {
-        entity.Property(e => e.Metadata)
-                  .HasColumnType("jsonb");
-      }
-    });
-
-    modelBuilder.Entity<RawSubtitle>(entity =>
-    {
-      if (_configuration.UseInMemoryDatabase)
-      {
-        modelBuilder.Entity<RawSubtitle>().Ignore(rs => rs.Metadata);
-      }
-      else
-      {
-        entity.Property(e => e.Metadata)
-                  .HasColumnType("jsonb");
-      }
-    });
-
-    modelBuilder.Entity<ConvertedVideo>(entity =>
-    {
-      if (_configuration.UseInMemoryDatabase)
-      {
-        modelBuilder.Entity<ConvertedVideo>().Ignore(wv => wv.Metadata);
-      }
-      else
-      {
-        entity.Property(e => e.Metadata)
-                  .HasColumnType("jsonb");
-      }
-
-    });
-
-    modelBuilder.Entity<ConvertedSubtitle>(entity =>
-    {
-      if (_configuration.UseInMemoryDatabase)
-      {
-        modelBuilder.Entity<ConvertedSubtitle>().Ignore(wvs => wvs.Metadata);
-      }
-      else
-      {
-        entity.Property(e => e.Metadata)
-                  .HasColumnType("jsonb");
-      }
-    });
-
+    modelBuilder.Entity<RawVideo>();
+    modelBuilder.Entity<RawSubtitle>();
+    modelBuilder.Entity<ConvertedVideo>();
+    modelBuilder.Entity<ConvertedSubtitle>();
   }
 
   protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
