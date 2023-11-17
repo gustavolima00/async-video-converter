@@ -78,14 +78,11 @@ public class VideoConversionService : IVideoConversionService
     public async Task ExtractVideoTracksAndConvertAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
         var rawVideo = await _rawVideosRepository.TryGetByIdAsync(rawVideoId, cancellationToken) ?? throw new ConvertedVideoServiceException($"Raw video with id {rawVideoId} not found");
+        Console.WriteLine($"Extracting video tracks from {rawVideo.Path}, raw video id: {rawVideo.Id}");
         var convertedVideo = await _convertedVideosRepository.GetOrCreateByRawVideoIdAsync(rawVideo.Id, cancellationToken);
         var videoTracks = await _mediaService.ExtractVideoTracksAsync(rawVideo.Path, cancellationToken);
-        var videoExtension = Path.GetExtension(rawVideo.Name);
-        foreach (var videoTrackInfo in videoTracks)
-        {
-            var mp4Stream = await _mediaService.ConvertToMp4Async(videoTrackInfo.Stream, videoExtension, cancellationToken);
-            await SaveVideoTrackAsync(mp4Stream, videoTrackInfo.Language, convertedVideo.Id, cancellationToken);
-        }
+        var tasks = videoTracks.Select(videoTrackInfo => SaveVideoTrackAsync(videoTrackInfo.Stream, videoTrackInfo.Language, convertedVideo.Id, cancellationToken));
+        await Task.WhenAll(tasks);
     }
 
     public async Task ExtractSubtitlesAsync(int rawVideoId, CancellationToken cancellationToken = default)

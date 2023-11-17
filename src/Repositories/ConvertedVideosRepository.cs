@@ -6,7 +6,6 @@ namespace Repositories;
 
 public interface IConvertedVideosRepository
 {
-    Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default);
     Task<ConvertedVideo> GetOrCreateByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default);
     Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
 
@@ -29,14 +28,6 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
     public async Task<ConvertedVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _context.ConvertedVideos.FirstOrDefaultAsync(rf => rf.Id == id, cancellationToken);
-    }
-
-    public async Task<IEnumerable<ConvertedVideo>> GetAllAsync(CancellationToken cancellationToken = default)
-    {
-        return await _context.ConvertedVideos
-            .Include(rf => rf.Subtitles)
-            .Include(rf => rf.Streams)
-            .ToListAsync(cancellationToken);
     }
 
     private async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default)
@@ -74,13 +65,15 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
     public async Task<ConvertedVideo> GetOrCreateByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)
     {
         var convertedVideo = await TryGetByRawVideoIdAsync(rawVideoId, cancellationToken);
+        if (convertedVideo is not null)
+        {
+            return convertedVideo;
+        }
 
-        convertedVideo ??= await CreateOrReplaceAsync(new()
-            {
-                RawVideoId = rawVideoId
-            }, cancellationToken);
-
-        return convertedVideo;
+        return await CreateOrReplaceAsync(new()
+        {
+            RawVideoId = rawVideoId
+        }, cancellationToken);
     }
 
     // Subtitles

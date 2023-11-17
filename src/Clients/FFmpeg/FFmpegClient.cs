@@ -7,8 +7,8 @@ public interface IFFmpegClient
 {
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
-    Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
-    Task<List<(IAudioStream metadata, Stream stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default);
+    Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, string videoExtension, CancellationToken cancellationToken = default);
+    Task<List<(IAudioStream metadata, Stream stream)>> ExtractVideoTracks(Stream videoStream, string videoExtension, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -44,26 +44,53 @@ public class FFmpegClient : IFFmpegClient
         return Xabe.FFmpeg.FFmpeg.Conversions.New();
     }
 
-    public async Task<List<(IAudioStream, Stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default)
+    public async Task<List<(IAudioStream, Stream)>> ExtractVideoTracks(Stream videoStream, string videoExtension, CancellationToken cancellationToken = default)
     {
-        var mediaInfo = await GetFileMetadata(inputPath, cancellationToken);
-
-        List<(IAudioStream metadata, Stream stream)> videoTracks = new();
-
-        foreach (var audioStream in mediaInfo.AudioStreams)
+        string? videoPath = null;
+        List<string> tracksPaths = new();
+        try
         {
-            string tempFilePath = Path.GetTempFileName();
+            videoPath = await SaveStreamIntoTempFile(videoStream, videoExtension, cancellationToken);
+            var mediaInfo = await GetFileMetadata(videoPath, cancellationToken);
 
-            var conversion = NewConversion()
-                .AddStream(mediaInfo.VideoStreams)
-                .AddStream(audioStream)
-                .SetOutput(tempFilePath);
+            List<(IAudioStream metadata, Stream stream)> videoTracks = new();
 
-            await conversion.Start(cancellationToken);
+            var tasks = mediaInfo.AudioStreams.Select(async stream =>
+            {
+                string tempFilePath = Path.GetTempFileName();
+                tempFilePath = Path.ChangeExtension(tempFilePath, "mp4");
 
-            videoTracks.Add((audioStream, File.OpenRead(tempFilePath)));
+                Console.WriteLine($"Converting for track: {stream.Index}");
+                var conversion = NewConversion()
+                    .AddStream(mediaInfo.VideoStreams)
+                    .AddStream(stream)
+                    .SetOutput(tempFilePath);
+
+                conversion.OnProgress += (sender, args) =>
+                {
+                    Console.Write($"\rProgresso da faixa {stream.Index}: {args.Percent}%");
+                };
+
+                await conversion.Start(cancellationToken);
+
+                Console.WriteLine($"Track converted: {stream.Index}");
+
+                tracksPaths.Add(tempFilePath);
+                videoTracks.Add((stream, File.OpenRead(tempFilePath)));
+            });
+
+            await Task.WhenAll(tasks);
+
+            return videoTracks;
         }
-        return videoTracks;
+        finally
+        {
+            if (videoPath is not null)
+            {
+                File.Delete(videoPath);
+            }
+            tracksPaths.ForEach(File.Delete);
+        }
     }
 
     public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
@@ -127,23 +154,23 @@ public class FFmpegClient : IFFmpegClient
         return new MemoryStream(Encoding.UTF8.GetBytes(writer.ToString()));
     }
 
-    public async Task<List<(ISubtitleStream, Stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default)
+    public async Task<List<(ISubtitleStream, Stream)>> ExtractSubtitles(Stream videoStream, string videoExtension, CancellationToken cancellationToken = default)
     {
         string? videoPath = null;
         List<string> subtitlesPaths = new();
         try
         {
-            videoPath = await SaveStreamIntoTempFile(videoStream, "mp4", cancellationToken);
+            videoPath = await SaveStreamIntoTempFile(videoStream, videoExtension, cancellationToken);
             var mediaInfo = await GetFileMetadata(videoPath, cancellationToken);
             var subtitleStreams = mediaInfo.SubtitleStreams;
             List<(ISubtitleStream metadata, Stream stream)> subtitles = new();
 
             List<string> subtitleFiles = new();
 
-            foreach (var stream in subtitleStreams)
+            var tasks = mediaInfo.SubtitleStreams.Select(async stream =>
             {
                 string tempFilePath = Path.GetTempFileName();
-                string subtitlePath = Path.ChangeExtension(tempFilePath, "srt");
+                string subtitlePath = Path.ChangeExtension(tempFilePath, "vtt");
                 var conversion = NewConversion()
                                     .AddStream(stream)
                                     .SetOutput(subtitlePath);
@@ -151,7 +178,9 @@ public class FFmpegClient : IFFmpegClient
                 await conversion.Start(cancellationToken);
                 subtitleFiles.Add(subtitlePath);
                 subtitles.Add((stream, File.OpenRead(subtitlePath)));
-            }
+            });
+
+            await Task.WhenAll(tasks);
 
             return subtitles;
         }

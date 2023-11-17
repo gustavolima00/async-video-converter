@@ -39,14 +39,16 @@ public class MediaService : IMediaService
     public async Task<IEnumerable<SubtitleInfo>> ExtractSubtitlesAsync(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
-        var subtitles = await _ffmpegClient.ExtractSubtitles(fileStream, cancellationToken);
+        var fileExtension = Path.GetExtension(path);
+        var subtitles = await _ffmpegClient.ExtractSubtitles(fileStream, fileExtension, cancellationToken);
         return subtitles.Select(s => new SubtitleInfo(s.metadata, s.stream));
     }
 
     public async Task<IEnumerable<VideoTrackInfo>> ExtractVideoTracksAsync(string path, CancellationToken cancellationToken = default)
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
-        var videoTracks = await _ffmpegClient.ExtractVideoTracks(path, cancellationToken);
+        var fileExtension = Path.GetExtension(path);
+        var videoTracks = await _ffmpegClient.ExtractVideoTracks(fileStream, fileExtension, cancellationToken);
         return videoTracks.Select(v => new VideoTrackInfo(v.metadata, v.stream));
     }
 }

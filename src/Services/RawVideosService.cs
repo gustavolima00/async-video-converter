@@ -36,20 +36,17 @@ public interface IRawVideoService
 public class RawVideosService : IRawVideoService
 {
     private readonly IBlobStorageClient _blobStorageClient;
-    private readonly IRawVideosRepository _rawFilesRepository;
-    private readonly IMediaService _videoManagerService;
+    private readonly IRawVideosRepository _rawVideosRepository;
     private readonly IQueueService _queueService;
 
     public RawVideosService(
         IBlobStorageClient blobStorageClient,
         IRawVideosRepository rawFilesRepository,
-        IMediaService videoManagerService,
         IQueueService queueService
     )
     {
         _blobStorageClient = blobStorageClient;
-        _rawFilesRepository = rawFilesRepository;
-        _videoManagerService = videoManagerService;
+        _rawVideosRepository = rawFilesRepository;
         _queueService = queueService;
     }
 
@@ -57,7 +54,7 @@ public class RawVideosService : IRawVideoService
     {
         var folderPath = $"{userUuid}/raw_videos";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
-        var rawFile = await _rawFilesRepository.CreateOrReplaceAsync(
+        var rawFile = await _rawVideosRepository.CreateOrReplaceAsync(
             new RawVideo
             {
                 Name = fileMetadata.Name,
@@ -66,6 +63,7 @@ public class RawVideosService : IRawVideoService
             }
             , cancellationToken);
 
+        Console.WriteLine($"Enqueueing raw video {rawFile.Id} for subtitle extraction");
         _queueService.EnqueueVideoToExtractTracks(new()
         {
             RawVideoId = rawFile.Id,
@@ -82,27 +80,27 @@ public class RawVideosService : IRawVideoService
     public async Task<RawVideo> GetAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
     {
         string path = $"{userUuid}/raw_videos/{fileName}";
-        var rawFile = await _rawFilesRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
+        var rawFile = await _rawVideosRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
         return rawFile;
     }
 
     public async Task UpdateSubtitleExtractionStatus(int id, AsyncTaskStatus status, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        var rawFile = await _rawVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         rawFile.ExtractSubtitleStatus = status;
-        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+        await _rawVideosRepository.UpdateAsync(rawFile, cancellationToken);
     }
 
     public async Task<RawVideo> GetAsync(int id, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        var rawFile = await _rawVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         return rawFile;
     }
 
     public async Task UpdateTrackExtractionStatus(int id, AsyncTaskStatus status, CancellationToken cancellationToken = default)
     {
-        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
-        rawFile.ExtractTracksStatus = status;
-        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
+        var rawVideo = await _rawVideosRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        rawVideo.ExtractTracksStatus = status;
+        await _rawVideosRepository.UpdateAsync(rawVideo, cancellationToken);
     }
 }

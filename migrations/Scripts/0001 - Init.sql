@@ -13,7 +13,7 @@ create table raw_videos(
     extract_tracks_status varchar(100) not null,
     user_uuid uuid,
 
-    constraint fk_raw_videos_webhook_users
+    constraint fk_raw_videos_hook_users
         foreign key (user_uuid)
         references webhook_users(uuid)
         on delete set null
@@ -22,7 +22,7 @@ create table raw_videos(
 create table converted_videos(
     id serial primary key,
     raw_video_id int not null unique,
-    constraint fk_web_videos_videos
+    constraint fk_converted_videos_raw_videos
         foreign key (raw_video_id)
         references raw_videos(id)
         on delete cascade
