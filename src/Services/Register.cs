@@ -11,10 +11,8 @@ public static class Register
     {
         services.AddSingleton(queuesConfiguration);
         services.AddScoped<IRawVideoService, RawVideosService>();
-        services.AddScoped<IRawSubtitlesService, RawSubtitlesService>();
         services.AddScoped<IMediaService, MediaService>();
         services.AddScoped<IVideoConversionService, VideoConversionService>();
-        services.AddScoped<IConvertedSubtitleService, ConvertedSubtitleService>();
         services.AddSingleton<IQueueService, QueueService>();
         services.AddScoped<IWebhookService, WebhookService>();
         return services;

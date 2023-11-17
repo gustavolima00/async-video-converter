@@ -8,6 +8,14 @@ public interface IVideoConversionService
 {
     Task ExtractVideoTracksAndConvertAsync(int rawVideoId, CancellationToken cancellationToken = default);
     Task ExtractSubtitlesAsync(int rawVideoId, CancellationToken cancellationToken = default);
+    Task SaveSubtitleAsync(
+        Guid userUuid,
+        Stream fileStream,
+        string fileExtension,
+        string language,
+        string rawVideoName,
+        CancellationToken cancellationToken = default
+    );
 }
 
 public class VideoConversionService : IVideoConversionService
@@ -90,5 +98,38 @@ public class VideoConversionService : IVideoConversionService
             var vttStream = await _mediaService.ConvertSrtToVttAsync(subtitle.Stream, cancellationToken);
             await SaveSubtitleTrackAsync(vttStream, subtitle.Language, convertedVideo.Id, cancellationToken);
         }
+    }
+
+    private async Task<Stream> ConvertSubtitleAsync(
+    Stream stream,
+    string fileExtension,
+    CancellationToken cancellationToken = default
+)
+    {
+        if (fileExtension == ".vtt")
+        {
+            return stream;
+        }
+        if (fileExtension == ".srt")
+        {
+            return await _mediaService.ConvertSrtToVttAsync(stream, cancellationToken);
+        }
+        throw new RawRawSubtitlesServiceException($"Subtitle file extension {fileExtension} not supported");
+    }
+
+    public async Task SaveSubtitleAsync(
+        Guid userUuid,
+        Stream fileStream,
+        string fileExtension,
+        string language,
+        string rawVideoName,
+        CancellationToken cancellationToken = default
+    )
+    {
+        var rawVideoPath = $"{userUuid}/raw_videos/{rawVideoName}";
+        var subtitleStream = await ConvertSubtitleAsync(fileStream, fileExtension, cancellationToken);
+        var rawVideo = await _rawVideosRepository.TryGetByPathAsync(rawVideoPath, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {rawVideoPath} not found");
+        var convertedVideo = await _convertedVideosRepository.GetOrCreateByRawVideoIdAsync(rawVideo.Id, cancellationToken);
+        await SaveSubtitleTrackAsync(subtitleStream, language, convertedVideo.Id, cancellationToken);
     }
 }

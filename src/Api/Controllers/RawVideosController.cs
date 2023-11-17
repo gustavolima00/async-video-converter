@@ -10,19 +10,19 @@ namespace Api.Controllers;
 public class RawVideosController : ControllerBase
 {
     private readonly IRawVideoService _rawVideosService;
-    private readonly IRawSubtitlesService _rawSubtitlesService;
+    private readonly IVideoConversionService _videoConversionService;
 
     public RawVideosController(
         IRawVideoService rawVideosService,
-        IRawSubtitlesService rawSubtitlesService
+        IVideoConversionService videoConversionService
     )
     {
         _rawVideosService = rawVideosService;
-        _rawSubtitlesService = rawSubtitlesService;
+        _videoConversionService = videoConversionService;
     }
 
     [HttpPut("send-video")]
-    public async Task<IActionResult> SendVideoToConversion(
+    public async Task<IActionResult> SendVideoAsync(
         [Required] IFormFile file,
         [FromQuery, Required] string fileName,
         [FromQuery, Required] Guid userUuid,
@@ -55,8 +55,9 @@ public class RawVideosController : ControllerBase
         try
         {
             using var stream = file.OpenReadStream();
-            var rawVideo = await _rawSubtitlesService.SaveAsync(userUuid, stream, language, rawVideoName, cancellationToken);
-            return Ok(rawVideo);
+            var fileExtension = Path.GetExtension(file.FileName) ?? throw new RawVideoServiceException("File extension not found");
+            await _videoConversionService.SaveSubtitleAsync(userUuid, stream, fileExtension, language, rawVideoName, cancellationToken);
+            return Ok();
         }
         catch (RawVideoServiceException e)
         {
