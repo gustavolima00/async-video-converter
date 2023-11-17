@@ -22,8 +22,13 @@ public interface IRawVideoService
         int id,
         CancellationToken cancellationToken = default
     );
-    Task UpdateConversionStatusAsync(
-        int id, ConversionStatus status,
+    Task UpdateSubtitleExtractionStatus(
+        int id, AsyncTaskStatus status,
+        CancellationToken cancellationToken = default
+    );
+
+    Task UpdateTrackExtractionStatus(
+        int id, AsyncTaskStatus status,
         CancellationToken cancellationToken = default
     );
 }
@@ -81,14 +86,23 @@ public class RawVideosService : IRawVideoService
         return rawFile;
     }
 
-    public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)
+    public async Task UpdateSubtitleExtractionStatus(int id, AsyncTaskStatus status, CancellationToken cancellationToken = default)
     {
-        await _rawFilesRepository.UpdateConversionStatusAsync(id, status, cancellationToken);
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        rawFile.ExtractSubtitleStatus = status;
+        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
     }
 
     public async Task<RawVideo> GetAsync(int id, CancellationToken cancellationToken = default)
     {
         var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
         return rawFile;
+    }
+
+    public async Task UpdateTrackExtractionStatus(int id, AsyncTaskStatus status, CancellationToken cancellationToken = default)
+    {
+        var rawFile = await _rawFilesRepository.TryGetByIdAsync(id, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with id {id} not found");
+        rawFile.ExtractTracksStatus = status;
+        await _rawFilesRepository.UpdateAsync(rawFile, cancellationToken);
     }
 }

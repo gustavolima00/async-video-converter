@@ -9,7 +9,8 @@ create table raw_videos(
     id serial primary key,
     name varchar(255) not null,
     path varchar(255) not null,
-    conversion_status varchar(255) not null,
+    extract_subtitle_status varchar(100) not null,
+    extract_tracks_status varchar(100) not null,
     user_uuid uuid,
 
     constraint fk_raw_videos_webhook_users
@@ -22,7 +23,6 @@ create table raw_subtitles(
     id serial primary key,
     language varchar(255),
     path varchar(255) not null,
-    conversion_status varchar(255) not null,
     raw_video_id int not null,
 
     constraint fk_videos_raw_videos
@@ -40,13 +40,13 @@ create table converted_videos(
         on delete cascade
 );
 
-create table converted_video_streams(
+create table converted_video_tracks(
     id serial primary key,
     converted_video_id int not null,
     path varchar(255) not null,
     language varchar(255) not null,
     link varchar(255) not null unique,
-    constraint fk_converted_video_streams_converted_videos
+    constraint fk_converted_video_tracks_converted_videos
         foreign key (converted_video_id)
         references converted_videos(id)
         on delete cascade

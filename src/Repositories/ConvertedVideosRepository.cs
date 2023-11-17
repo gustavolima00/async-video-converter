@@ -76,9 +76,9 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
         var convertedVideo = await TryGetByRawVideoIdAsync(rawVideoId, cancellationToken);
 
         convertedVideo ??= await CreateOrReplaceAsync(new()
-        {
-            RawVideoId = rawVideoId
-        }, cancellationToken);
+            {
+                RawVideoId = rawVideoId
+            }, cancellationToken);
 
         return convertedVideo;
     }

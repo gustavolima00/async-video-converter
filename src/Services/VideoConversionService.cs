@@ -1,6 +1,5 @@
 ﻿using Clients.BlobStorage;
 using Repositories;
-using Repositories.Models;
 using Services.Exceptions;
 
 namespace Services;

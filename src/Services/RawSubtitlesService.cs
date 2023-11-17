@@ -19,11 +19,6 @@ public interface IRawSubtitlesService
         int id,
         CancellationToken cancellationToken = default
     );
-
-    Task UpdateConversionStatusAsync(
-        int id, ConversionStatus status,
-        CancellationToken cancellationToken = default
-    );
 }
 
 public class RawSubtitlesService : IRawSubtitlesService
@@ -84,10 +79,5 @@ public class RawSubtitlesService : IRawSubtitlesService
     {
         var rawSubtitle = await _rawFilesRepository.TryGetSubtitleByIdAsync(id, cancellationToken) ?? throw new RawRawSubtitlesServiceException($"Raw subtitle with id {id} not found");
         return rawSubtitle;
-    }
-
-    public async Task UpdateConversionStatusAsync(int id, ConversionStatus status, CancellationToken cancellationToken = default)
-    {
-        await _rawFilesRepository.UpdateSubtitleConversionStatusAsync(id, status, cancellationToken);
     }
 }

@@ -15,9 +15,13 @@ public class RawVideo
     [Column("path")]
     public string Path { get; set; } = "";
 
-    [Column("conversion_status", TypeName = "varchar(255)")]
+    [Column("extract_subtitle_status", TypeName = "varchar(255)")]
     [JsonConverter(typeof(JsonStringEnumConverter))]
-    public ConversionStatus ConversionStatus { get; set; } = ConversionStatus.NotConverted;
+    public AsyncTaskStatus ExtractSubtitleStatus { get; set; } = AsyncTaskStatus.Pending;
+
+    [Column("extract_tracks_status", TypeName = "varchar(255)")]
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public AsyncTaskStatus ExtractTracksStatus { get; set; } = AsyncTaskStatus.Pending;
 
     [Column("user_uuid")]
     public Guid UserUuid { get; set; }
