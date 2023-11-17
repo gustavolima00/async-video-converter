@@ -8,6 +8,7 @@ public interface IFFmpegClient
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
     Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
+    Task<List<(IAudioStream, Stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
@@ -38,34 +39,32 @@ public class FFmpegClient : IFFmpegClient
         return await Xabe.FFmpeg.FFmpeg.GetMediaInfo(path, cancellationToken);
     }
 
-    // public static async Task ExtractAudioTracksAndConvert(string inputPath, CancellationToken cancellationToken = default)
-    // {
-    //     var mediaInfo = await Xabe.FFmpeg.FFmpeg.GetMediaInfo(inputPath, cancellationToken);
+    private static IConversion NewConversion()
+    {
+        return Xabe.FFmpeg.FFmpeg.Conversions.New();
+    }
 
-    //     int trackIndex = 0;
-    //     foreach (var audioStream in mediaInfo.AudioStreams)
-    //     {
-    //         string outputPath = Path.Combine(
-    //             Path.GetDirectoryName(inputPath),
-    //             $"{Path.GetFileNameWithoutExtension(inputPath)}_track{trackIndex}.mp4");
+    public async Task<List<(IAudioStream, Stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default)
+    {
+        var mediaInfo = await GetFileMetadata(inputPath, cancellationToken);
 
-    //         var conversion = Xabe.FFmpeg.FFmpeg.Conversions.New()
-    //             // Copia o vídeo como está.
-    //             .AddStream(mediaInfo.VideoStreams)
-    //             // Seleciona a faixa de áudio específica.
-    //             .AddStream(audioStream)
-    //             // Define o codec de vídeo para copiar diretamente sem reencode (para velocidade).
-    //             .SetVideoCodec(VideoCodec.Copy)
-    //             // Define o codec de áudio para copiar diretamente.
-    //             .SetAudioCodec(AudioCodec.Copy)
-    //             // Define o caminho do arquivo de saída.
-    //             .SetOutput(outputPath);
+        List<(IAudioStream metadata, Stream stream)> videoTracks = new();
 
-    //         // Inicia a conversão.
-    //         await conversion.Start(cancellationToken);
-    //         trackIndex++;
-    //     }
-    // }
+        foreach (var audioStream in mediaInfo.AudioStreams)
+        {
+            string tempFilePath = Path.GetTempFileName();
+
+            var conversion = NewConversion()
+                .AddStream(mediaInfo.VideoStreams)
+                .AddStream(audioStream)
+                .SetOutput(tempFilePath);
+
+            await conversion.Start(cancellationToken);
+
+            videoTracks.Add((audioStream, File.OpenRead(tempFilePath)));
+        }
+        return videoTracks;
+    }
 
     public static async Task ConvertToMp4(string inputPath, string outputPath, CancellationToken cancellationToken = default)
     {
@@ -75,6 +74,11 @@ public class FFmpegClient : IFFmpegClient
 
     public async Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default)
     {
+        if (fileExtension == "mp4")
+        {
+            return stream;
+        }
+
         string? videoFilePath = null;
         string? outputFilePath = null;
         try
@@ -140,7 +144,7 @@ public class FFmpegClient : IFFmpegClient
             {
                 string tempFilePath = Path.GetTempFileName();
                 string subtitlePath = Path.ChangeExtension(tempFilePath, "srt");
-                var conversion = Xabe.FFmpeg.FFmpeg.Conversions.New()
+                var conversion = NewConversion()
                                     .AddStream(stream)
                                     .SetOutput(subtitlePath);
 
