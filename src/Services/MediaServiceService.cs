@@ -10,6 +10,7 @@ public interface IMediaService
     Task<Stream> ConvertToMp4Async(string path, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVttAsync(string path, CancellationToken cancellationToken = default);
     Task<IEnumerable<SubtitleInfo>> ExtractSubtitlesAsync(string path, CancellationToken cancellationToken = default);
+    Task<IEnumerable<VideoTrackInfo>> ExtractVideoTracksAsync(string path, CancellationToken cancellationToken = default);
 }
 
 public class MediaService : IMediaService
@@ -27,10 +28,6 @@ public class MediaService : IMediaService
     {
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var fileExtension = Path.GetExtension(path);
-        if (fileExtension == ".mp4")
-        {
-            return fileStream;
-        }
         var mp4Stream = await _ffmpegClient.ConvertToMp4(fileStream, fileExtension, cancellationToken);
         return mp4Stream;
     }
@@ -47,5 +44,12 @@ public class MediaService : IMediaService
         var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
         var subtitles = await _ffmpegClient.ExtractSubtitles(fileStream, cancellationToken);
         return subtitles.Select(s => new SubtitleInfo(s.metadata, s.stream));
+    }
+
+    public async Task<IEnumerable<VideoTrackInfo>> ExtractVideoTracksAsync(string path, CancellationToken cancellationToken = default)
+    {
+        var fileStream = await _blobStorageClient.GetFileAsync(path, cancellationToken) ?? throw new Exception($"File not found: {path}");
+        var videoTracks = await _ffmpegClient.ExtractVideoTracks(path, cancellationToken);
+        return videoTracks.Select(v => new VideoTrackInfo(v.metadata, v.stream));
     }
 }

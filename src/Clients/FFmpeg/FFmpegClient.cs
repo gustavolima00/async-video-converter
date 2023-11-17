@@ -8,7 +8,7 @@ public interface IFFmpegClient
     Task<Stream> ConvertToMp4(Stream stream, string fileExtension, CancellationToken cancellationToken = default);
     Task<Stream> ConvertSrtToVtt(Stream srtStream, CancellationToken cancellationToken = default);
     Task<List<(ISubtitleStream metadata, Stream stream)>> ExtractSubtitles(Stream videoStream, CancellationToken cancellationToken = default);
-    Task<List<(IAudioStream, Stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default);
+    Task<List<(IAudioStream metadata, Stream stream)>> ExtractVideoTracks(string inputPath, CancellationToken cancellationToken = default);
 }
 
 public class FFmpegClient : IFFmpegClient
