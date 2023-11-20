@@ -36,6 +36,8 @@ public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTrack
             await rawVideoService.UpdateTrackExtractionStatus(data.RawVideoId, AsyncTaskStatus.Running, cancellationToken);
             await videoConversionService.ExtractVideoTracksAndConvertAsync(data.RawVideoId, cancellationToken);
             await rawVideoService.UpdateTrackExtractionStatus(data.RawVideoId, AsyncTaskStatus.Completed, cancellationToken);
+            var rawVideo = await rawVideoService.GetAsync(data.RawVideoId, cancellationToken);
+            var videoTracks = rawVideo.ConvertedVideo.Streams.ToList();
             await webhookService.SendWebhookAsync<TrackExtranctionWebhook>(new()
             {
                 Event = WebhookEvent.VideoTracksExtracted,
@@ -43,7 +45,12 @@ public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTrack
                 Payload = new()
                 {
                     RawVideoUuid = data.RawVideoUuid,
-                    UserUuid = data.UserUuid
+                    UserUuid = data.UserUuid,
+                    VideoTracks = videoTracks.Select(x => new TrackDetails
+                    {
+                        Path = x.Path,
+                        Language = x.Language,
+                    })
                 }
             }, cancellationToken);
 

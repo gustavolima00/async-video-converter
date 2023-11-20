@@ -35,6 +35,8 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
         {
             await rawVideoService.UpdateSubtitleExtractionStatus(videoToExtractSubtitles.RawVideoId, AsyncTaskStatus.Running, cancellationToken);
             await videoConversionService.ExtractSubtitlesAsync(videoToExtractSubtitles.RawVideoId, cancellationToken);
+            var rawVideo = await rawVideoService.GetAsync(videoToExtractSubtitles.RawVideoId, cancellationToken);
+            var subtitles = rawVideo.ConvertedVideo.Subtitles.ToList();
             await webhookService.SendWebhookAsync<SubtitleExtractionWebhook>(new()
             {
                 Event = WebhookEvent.SubtitleTracksExtracted,
@@ -42,7 +44,12 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
                 Payload = new()
                 {
                     RawVideoUuid = videoToExtractSubtitles.RawVideoUuid,
-                    UserUuid = videoToExtractSubtitles.UserUuid
+                    UserUuid = videoToExtractSubtitles.UserUuid,
+                    Subtitles = subtitles.Select(x => new SubtitleDetails
+                    {
+                        Language = x.Language,
+                        Path = x.Path
+                    })
                 }
             }, cancellationToken);
             await rawVideoService.UpdateSubtitleExtractionStatus(videoToExtractSubtitles.RawVideoId, AsyncTaskStatus.Completed, cancellationToken);
