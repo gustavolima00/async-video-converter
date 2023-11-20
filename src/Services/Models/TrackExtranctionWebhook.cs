@@ -1,8 +1,7 @@
 namespace Services.Models;
 
-public class VideoToExtractSubtitles
+public class TrackExtranctionWebhook
 {
-  public int RawVideoId { get; set; }
   public Guid UserUuid { get; set; }
   public Guid RawVideoUuid { get; set; }
 }

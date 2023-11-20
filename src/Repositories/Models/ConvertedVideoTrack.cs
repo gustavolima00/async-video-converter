@@ -16,7 +16,7 @@ public class ConvertedVideoTrack
     public string Path { get; set; } = "";
 
     [Column("language")]
-    public string Language { get; set; } = "";
+    public string Language { get; set; } = "und";
 
     [Column("link")]
     public string Link { get; set; } = "";

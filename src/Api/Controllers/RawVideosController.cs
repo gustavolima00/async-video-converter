@@ -45,7 +45,7 @@ public class RawVideosController : ControllerBase
     }
 
     [HttpPut("send-subtitle")]
-    public async Task<IActionResult> SendSubtitleToConversion(
+    public async Task<IActionResult> SendSubtitleAsync(
         [Required] IFormFile file,
         [FromQuery, Required] string language,
         [FromQuery, Required] string rawVideoName,
@@ -69,16 +69,15 @@ public class RawVideosController : ControllerBase
         }
     }
 
-    [HttpGet]
-    public async Task<IActionResult> GetFile(
-        [FromQuery, Required] string fileName,
-        [FromQuery, Required] Guid userUuid,
+    [HttpGet("{rawVideoUuid}")]
+    public async Task<IActionResult> GetRawVideo(
+        [FromRoute, Required] Guid rawVideoUuid,
         CancellationToken cancellationToken
         )
     {
         try
         {
-            var fileDetails = await _rawVideosService.GetAsync(userUuid, fileName, cancellationToken);
+            var fileDetails = await _rawVideosService.GetAsync(rawVideoUuid, cancellationToken);
             return Ok(fileDetails);
         }
         catch (ServicesException e)
@@ -86,6 +85,27 @@ public class RawVideosController : ControllerBase
             return BadRequest(new ProblemDetails
             {
                 Title = "Erro ao buscar arquivo.",
+                Detail = e.Message,
+            });
+        }
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ListUserRawVideos(
+        [FromQuery, Required] Guid userUuid,
+        CancellationToken cancellationToken
+    )
+    {
+        try
+        {
+            var rawVideos = await _rawVideosService.GetByUserUuidAsync(userUuid, cancellationToken);
+            return Ok(rawVideos);
+        }
+        catch (ServicesException e)
+        {
+            return BadRequest(new ProblemDetails
+            {
+                Title = "Erro ao buscar arquivos.",
                 Detail = e.Message,
             });
         }

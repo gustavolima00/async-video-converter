@@ -54,7 +54,7 @@ public class VideoConversionService : IVideoConversionService
             ConvertedVideoId = convertedVideo.Id,
             Link = videoLink,
             Path = fileMetadata.Path,
-            Language = language
+            Language = language ?? "und"
         }, cancellationToken);
     }
 
@@ -71,7 +71,7 @@ public class VideoConversionService : IVideoConversionService
             ConvertedVideoId = convertedVideo.Id,
             Link = subtitleLink,
             Path = fileMetadata.Path,
-            Language = language
+            Language = language ?? "und"
         }, cancellationToken);
     }
 

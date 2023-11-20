@@ -9,7 +9,7 @@ public class RawVideo
     [Column("id")]
     public int Id { get; set; }
     [Column("uuid")]
-    public Guid Uuid { get; set; }
+    public Guid Uuid { get; set; }  = Guid.NewGuid();
 
     [Column("name")]
     public string Name { get; set; } = "";

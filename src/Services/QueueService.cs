@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Clients.RabbitMQ;
 using Services.Configuration;
 using Services.Models;
@@ -8,7 +9,7 @@ public interface IQueueService
 {
     void EnqueueVideoToExtractTracks(VideoToExtractVideoTracks videoToExtractTracks);
     void EnqueueVideoToExtractSubtitles(VideoToExtractSubtitles videoToExtractSubtitles);
-    void EnqueueWebhook(WebHookDetails webhookDetails);
+    void EnqueueWebhook<T>(WebHookDetails<T> webhookDetails, string url);
     void EnqueueMessage<T>(string queueName, T message);
     IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10);
     void DeleteMessage(ulong messageId);
@@ -39,9 +40,13 @@ public class QueueService : IQueueService
         EnqueueMessage(_queuesConfiguration.ExtractSubtitlesQueueName, videoToExtractSubtitles);
     }
 
-    public void EnqueueWebhook(WebHookDetails webhookDetails)
+    public void EnqueueWebhook<T>(WebHookDetails<T> webhookDetails, string url)
     {
-        EnqueueMessage(_queuesConfiguration.WebhookQueueName, webhookDetails);
+        var content = JsonSerializer.Serialize(webhookDetails);
+        EnqueueMessage(_queuesConfiguration.WebhookQueueName, new WebHookToEnqueue {
+            SerializedData = content,
+            Url = url
+        });
     }
 
     public IEnumerable<(ulong messageId, T message)> ReadMessages<T>(string queueName, int maxMessages = 10)

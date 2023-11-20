@@ -10,7 +10,7 @@ public enum WebhookEvent
   SubtitleTrackExtractionFailed,
 }
 
-public class WebHookDetails
+public class WebHookDetails<T>
 {
   [JsonConverter(typeof(JsonStringEnumConverter))]
 
@@ -18,7 +18,13 @@ public class WebHookDetails
 
   public Guid UserUuid { get; set; }
   public string? Error { get; set; }
-  public string Payload { get; set; } = "";
+  public T? Payload { get; set; } = default;
+}
+
+public class WebHookToEnqueue
+{
+  public string SerializedData { get; set; } = "";
+  public string Url { get; set; } = "";
 }
 
 

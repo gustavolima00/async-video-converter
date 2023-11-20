@@ -1,5 +1,4 @@
 using System.Text;
-using System.Text.Json;
 using Repositories;
 using Repositories.Models;
 using Services.Models;
@@ -33,11 +32,11 @@ public interface IWebhookService
     CancellationToken cancellationToken = default
   );
   Task ProcessWebhookAsync(
-    WebHookDetails webHookDetails,
+    WebHookToEnqueue webHookToEnqueue,
     CancellationToken cancellationToken = default
   );
-  Task SendWebhookAsync(
-    WebHookDetails webHookDetails,
+  Task SendWebhookAsync<T>(
+    WebHookDetails<T> webHookDetails,
     CancellationToken cancellationToken = default
   );
 }
@@ -107,28 +106,27 @@ public class WebhookService : IWebhookService
   }
 
   public async Task ProcessWebhookAsync(
-    WebHookDetails webHookDetails,
+    WebHookToEnqueue webHookToEnqueue,
     CancellationToken cancellationToken = default
   )
   {
-    var webhookUser = await GetWebhookUserAsync(webHookDetails.UserUuid, cancellationToken);
-    var content = new StringContent(JsonSerializer.Serialize(webHookDetails), Encoding.UTF8, "application/json");
-    var response = await _httpClient.PostAsync(webhookUser.WebhookUrl, content, cancellationToken);
+    var content = new StringContent(webHookToEnqueue.SerializedData, Encoding.UTF8, "application/json");
+    var response = await _httpClient.PostAsync(webHookToEnqueue.Url, content, cancellationToken);
     if (!response.IsSuccessStatusCode)
     {
       throw new Exception("Webhook failed to send");
     }
   }
 
-  public async Task SendWebhookAsync(
-    WebHookDetails webHookDetails,
+  public async Task SendWebhookAsync<T>(
+    WebHookDetails<T> webHookDetails,
     CancellationToken cancellationToken = default
   )
   {
     var webhookUser = await GetWebhookUserAsync(webHookDetails.UserUuid, cancellationToken);
     if (webhookUser.Events.Contains(webHookDetails.Event.ToString()))
     {
-      _queueService.EnqueueWebhook(webHookDetails);
+      _queueService.EnqueueWebhook(webHookDetails, webhookUser.WebhookUrl);
     }
   }
 }

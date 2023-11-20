@@ -35,17 +35,22 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
         {
             await rawVideoService.UpdateSubtitleExtractionStatus(videoToExtractSubtitles.RawVideoId, AsyncTaskStatus.Running, cancellationToken);
             await videoConversionService.ExtractSubtitlesAsync(videoToExtractSubtitles.RawVideoId, cancellationToken);
-            await webhookService.SendWebhookAsync(new()
+            await webhookService.SendWebhookAsync<SubtitleExtractionWebhook>(new()
             {
                 Event = WebhookEvent.SubtitleTracksExtracted,
-                UserUuid = videoToExtractSubtitles.UserUuid
+                UserUuid = videoToExtractSubtitles.UserUuid,
+                Payload = new()
+                {
+                    RawVideoUuid = videoToExtractSubtitles.RawVideoUuid,
+                    UserUuid = videoToExtractSubtitles.UserUuid
+                }
             }, cancellationToken);
             await rawVideoService.UpdateSubtitleExtractionStatus(videoToExtractSubtitles.RawVideoId, AsyncTaskStatus.Completed, cancellationToken);
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to extract subtitle tracks");
-            await webhookService.SendWebhookAsync(new()
+            await webhookService.SendWebhookAsync<SubtitleExtractionWebhook>(new()
             {
                 Event = WebhookEvent.SubtitleTrackExtractionFailed,
                 UserUuid = videoToExtractSubtitles.UserUuid,

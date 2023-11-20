@@ -36,17 +36,22 @@ public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTrack
             await rawVideoService.UpdateTrackExtractionStatus(data.RawVideoId, AsyncTaskStatus.Running, cancellationToken);
             await videoConversionService.ExtractVideoTracksAndConvertAsync(data.RawVideoId, cancellationToken);
             await rawVideoService.UpdateTrackExtractionStatus(data.RawVideoId, AsyncTaskStatus.Completed, cancellationToken);
-            await webhookService.SendWebhookAsync(new()
+            await webhookService.SendWebhookAsync<TrackExtranctionWebhook>(new()
             {
                 Event = WebhookEvent.VideoTracksExtracted,
-                UserUuid = data.UserUuid
+                UserUuid = data.UserUuid,
+                Payload = new()
+                {
+                    RawVideoUuid = data.RawVideoUuid,
+                    UserUuid = data.UserUuid
+                }
             }, cancellationToken);
 
         }
         catch (Exception e)
         {
             _logger.LogError(e, "Failed to extract video tracks");
-            await webhookService.SendWebhookAsync(new()
+            await webhookService.SendWebhookAsync<TrackExtranctionWebhook>(new()
             {
                 Event = WebhookEvent.VideoTrackExtractionFailed,
                 UserUuid = data.UserUuid,

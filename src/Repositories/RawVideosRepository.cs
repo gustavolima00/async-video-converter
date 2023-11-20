@@ -9,7 +9,9 @@ public interface IRawVideosRepository
     Task<RawVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default);
     Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default);
     Task<RawVideo> CreateOrReplaceAsync(RawVideo rawFile, CancellationToken cancellationToken = default);
+    Task<RawVideo> GetByUuidAsync(Guid uuid, CancellationToken cancellationToken = default);
     Task UpdateAsync(RawVideo rawVideo, CancellationToken cancellationToken = default);
+    Task<IEnumerable<RawVideo>> GetByUserUuidAsync(Guid userUuid, CancellationToken cancellationToken = default);
 }
 
 public class RawVideosRepository : IRawVideosRepository
@@ -35,6 +37,26 @@ public class RawVideosRepository : IRawVideosRepository
             .Include(rf => rf.ConvertedVideo.Subtitles)
             .Include(rf => rf.ConvertedVideo.Streams)
             .FirstOrDefaultAsync(rf => rf.Path == path, cancellationToken);
+    }
+
+    public async Task<RawVideo> GetByUuidAsync(Guid uuid, CancellationToken cancellationToken = default)
+    {
+        var rawVideo = await _context.RawVideos
+            .Include(rf => rf.ConvertedVideo)
+            .Include(rf => rf.ConvertedVideo.Subtitles)
+            .Include(rf => rf.ConvertedVideo.Streams)
+            .FirstOrDefaultAsync(rf => rf.Uuid == uuid, cancellationToken);
+        return rawVideo ?? throw new Exception($"Raw video with uuid {uuid} not found");
+    }
+
+    public async Task<IEnumerable<RawVideo>> GetByUserUuidAsync(Guid userUuid, CancellationToken cancellationToken = default)
+    {
+        return await _context.RawVideos
+            .Include(rf => rf.ConvertedVideo)
+            .Include(rf => rf.ConvertedVideo.Subtitles)
+            .Include(rf => rf.ConvertedVideo.Streams)
+            .Where(rf => rf.UserUuid == userUuid)
+            .ToListAsync(cancellationToken);
     }
 
     public async Task<RawVideo> CreateOrReplaceAsync(RawVideo newFile, CancellationToken cancellationToken = default)

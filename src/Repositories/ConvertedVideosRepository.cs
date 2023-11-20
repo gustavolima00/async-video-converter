@@ -32,29 +32,20 @@ public class ConvertedVideosRepository : IConvertedVideosRepository
 
     private async Task<ConvertedVideo> CreateOrReplaceAsync(ConvertedVideo convertedVideo, CancellationToken cancellationToken = default)
     {
-        using var transaction = _context.TryBeginTransaction();
+        var existingVideo = await _context.ConvertedVideos
+            .AsNoTracking()
+            .FirstOrDefaultAsync(cv => cv.RawVideoId == convertedVideo.RawVideoId, cancellationToken);
 
-        try
+        if (existingVideo is not null)
         {
-            var existingFile = await _context.ConvertedVideos.SingleOrDefaultAsync(rf => rf.RawVideoId == convertedVideo.RawVideoId, cancellationToken);
-
-            if (existingFile is not null)
-            {
-                _context.ConvertedVideos.Remove(existingFile);
-            }
-
+            _context.Entry(existingVideo).CurrentValues.SetValues(convertedVideo);
+        }
+        else
+        {
             await _context.ConvertedVideos.AddAsync(convertedVideo, cancellationToken);
-            await _context.SaveChangesAsync(cancellationToken);
-
-            await transaction.TryCommitAsync(cancellationToken);
-
-            return convertedVideo;
         }
-        catch
-        {
-            await transaction.TryRollbackAsync(cancellationToken);
-            throw;
-        }
+        await _context.SaveChangesAsync(cancellationToken);
+        return convertedVideo;
     }
 
     private async Task<ConvertedVideo?> TryGetByRawVideoIdAsync(int rawVideoId, CancellationToken cancellationToken = default)

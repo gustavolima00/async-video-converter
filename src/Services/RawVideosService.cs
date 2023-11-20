@@ -14,8 +14,7 @@ public interface IRawVideoService
         CancellationToken cancellationToken = default
     );
     Task<RawVideo> GetAsync(
-        Guid userUuid,
-        string fileName,
+        Guid rawVideoUuid,
         CancellationToken cancellationToken = default
     );
     Task<RawVideo> GetAsync(
@@ -29,6 +28,11 @@ public interface IRawVideoService
 
     Task UpdateTrackExtractionStatus(
         int id, AsyncTaskStatus status,
+        CancellationToken cancellationToken = default
+    );
+
+    Task<IEnumerable<RawVideo>> GetByUserUuidAsync(
+        Guid userUuid, 
         CancellationToken cancellationToken = default
     );
 }
@@ -54,7 +58,7 @@ public class RawVideosService : IRawVideoService
     {
         var folderPath = $"{userUuid}/raw_videos";
         var fileMetadata = await _blobStorageClient.UploadFileAsync(fileStream, fileName, folderPath, cancellationToken);
-        var rawFile = await _rawVideosRepository.CreateOrReplaceAsync(
+        var rawVideo = await _rawVideosRepository.CreateOrReplaceAsync(
             new RawVideo
             {
                 Name = fileMetadata.Name,
@@ -63,25 +67,29 @@ public class RawVideosService : IRawVideoService
             }
             , cancellationToken);
 
-        Console.WriteLine($"Enqueueing raw video {rawFile.Id} for subtitle extraction");
         _queueService.EnqueueVideoToExtractTracks(new()
         {
-            RawVideoId = rawFile.Id,
-            UserUuid = userUuid
+            RawVideoId = rawVideo.Id,
+            UserUuid = userUuid,
+            RawVideoUuid = rawVideo.Uuid
         });
         _queueService.EnqueueVideoToExtractSubtitles(new()
         {
-            RawVideoId = rawFile.Id,
-            UserUuid = userUuid
+            RawVideoId = rawVideo.Id,
+            UserUuid = userUuid,
+            RawVideoUuid = rawVideo.Uuid
         });
-        return rawFile;
+        return rawVideo;
     }
 
-    public async Task<RawVideo> GetAsync(Guid userUuid, string fileName, CancellationToken cancellationToken = default)
+    public async Task<RawVideo> GetAsync(Guid rawVideoUuid, CancellationToken cancellationToken = default)
     {
-        string path = $"{userUuid}/raw_videos/{fileName}";
-        var rawFile = await _rawVideosRepository.TryGetByPathAsync(path, cancellationToken) ?? throw new RawVideoServiceException($"Raw file with path {path} not found");
-        return rawFile;
+        return await _rawVideosRepository.GetByUuidAsync(rawVideoUuid, cancellationToken);
+    }
+
+    public async Task<IEnumerable<RawVideo>> GetByUserUuidAsync(Guid userUuid, CancellationToken cancellationToken = default)
+    {
+        return await _rawVideosRepository.GetByUserUuidAsync(userUuid, cancellationToken);
     }
 
     public async Task UpdateSubtitleExtractionStatus(int id, AsyncTaskStatus status, CancellationToken cancellationToken = default)
