@@ -27,11 +27,10 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
     protected abstract string QueueUrl { get; }
     protected virtual int DelayAfterNoMessage => 1000;
     protected virtual int DelayAfterError => 1000;
-    protected virtual int BatchSize => 10;
+    protected virtual int BatchSize => 4;
 
     protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        using var scope = _serviceScopeFactory.CreateScope();
         while (!cancellationToken.IsCancellationRequested)
         {
             try
@@ -39,10 +38,12 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
                 var messages = _queueService.ReadMessages<TMessageType>(QueueUrl, BatchSize);
                 if (messages.Any())
                 {
-                    foreach (var message in messages)
+                    var tasks = messages.Select(async message =>
                     {
+                        using var scope = _serviceScopeFactory.CreateScope();
                         await LogAndProcessMessage(scope, message.messageId, message.message, cancellationToken);
-                    }
+                    });
+                    await Task.WhenAll(tasks);
                     continue;
                 }
                 await Task.Delay(DelayAfterNoMessage, cancellationToken);

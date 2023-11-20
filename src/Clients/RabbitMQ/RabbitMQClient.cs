@@ -30,7 +30,7 @@ public class RabbitMQClient : IRabbitMQClient
         {
             try
             {
-                var factory = new ConnectionFactory() { HostName = _configuration.Hostname };
+                var factory = new ConnectionFactory() { HostName = _configuration.Hostname, RequestedHeartbeat = TimeSpan.FromMinutes(1) };
                 return factory.CreateConnection();
             }
             catch (Exception)
