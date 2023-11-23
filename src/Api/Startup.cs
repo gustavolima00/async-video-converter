@@ -1,3 +1,6 @@
+using Repositories.Postgres;
+using Microsoft.EntityFrameworkCore;
+
 namespace Api
 {
     public class Startup
@@ -18,9 +21,19 @@ namespace Api
 
         public void Configure(
             IApplicationBuilder app,
-            IWebHostEnvironment env)
+            IWebHostEnvironment env,
+            DatabaseContext databaseContext
+        )
         {
-
+            try
+            {
+                Console.WriteLine("Migrating database...");
+                databaseContext.Database.Migrate();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Error migrating database: " + ex.Message);
+            }
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
