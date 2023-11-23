@@ -61,7 +61,12 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
             {
                 Event = WebhookEvent.SubtitleTrackExtractionFailed,
                 UserUuid = videoToExtractSubtitles.UserUuid,
-                Error = e.Message
+                Error = e.Message,
+                Payload = new()
+                {
+                    RawVideoUuid = videoToExtractSubtitles.RawVideoUuid,
+                    UserUuid = videoToExtractSubtitles.UserUuid,
+                }
             }, cancellationToken);
             await rawVideoService.UpdateSubtitleExtractionStatus(videoToExtractSubtitles.RawVideoId, AsyncTaskStatus.Failed, cancellationToken);
         }

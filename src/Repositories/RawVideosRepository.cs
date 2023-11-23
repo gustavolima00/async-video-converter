@@ -27,7 +27,11 @@ public class RawVideosRepository : IRawVideosRepository
 
     public async Task<RawVideo?> TryGetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
-        return await _context.RawVideos.FindAsync(new object?[] { id }, cancellationToken: cancellationToken);
+        return await _context.RawVideos
+                    .Include(rf => rf.ConvertedVideo)
+                    .Include(rf => rf.ConvertedVideo.Subtitles)
+                    .Include(rf => rf.ConvertedVideo.Streams)
+                    .FirstOrDefaultAsync(rf => rf.Id == id, cancellationToken);
     }
 
     public async Task<RawVideo?> TryGetByPathAsync(string path, CancellationToken cancellationToken = default)

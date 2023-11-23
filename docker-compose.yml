@@ -38,4 +38,4 @@ services:
       - APP_PORT=80
       - USE_CORS=true
     volumes:
-      - /media/gustavo/8a393b51-8258-49ec-9f3d-d2a1d8764dbd/home/gustavo/blob-storage:/dados
+      - /media/gustavo/0cead188-0fac-43d9-9d67-98cfeb4925ce/blob-storage:/dados

@@ -62,7 +62,12 @@ public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTrack
             {
                 Event = WebhookEvent.VideoTrackExtractionFailed,
                 UserUuid = data.UserUuid,
-                Error = e.Message
+                Error = e.Message,
+                Payload = new()
+                {
+                    RawVideoUuid = data.RawVideoUuid,
+                    UserUuid = data.UserUuid,
+                }
             }, cancellationToken);
             await rawVideoService.UpdateTrackExtractionStatus(data.RawVideoId, AsyncTaskStatus.Failed, cancellationToken);
         }
