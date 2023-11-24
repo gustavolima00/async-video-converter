@@ -13,10 +13,9 @@ public class ExtractVideoTracksWorker : BaseQueueWorker<VideoToExtractVideoTrack
     private readonly ILogger<ExtractVideoTracksWorker> _logger;
     public ExtractVideoTracksWorker(
         ILogger<ExtractVideoTracksWorker> logger,
-        IQueueService queueService,
         QueuesConfiguration queuesConfiguration,
         IServiceScopeFactory serviceScopeFactory
-    ) : base(logger, queueService, serviceScopeFactory)
+    ) : base(logger, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.ExtractVideoTracksQueueName;
         _logger = logger;

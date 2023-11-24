@@ -1,6 +1,6 @@
 version: "3.8"
 services:
-  app:
+  video-converter:
     build: .
     environment:
       BLOB_STORAGE_URL: http://blob-storage
@@ -10,11 +10,25 @@ services:
     depends_on:
       - rabbitmq
       - postgres
-      - blob-storage
     restart: always
     ports:
       - "5001:80"
-
+  video-stream-api:
+    image: gustavolim00/video-stream-api:0.3-test
+    command: bin/rails server -b 0.0.0.0
+    environment:
+      RAILS_ENV: development
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: postgres
+      BLOB_STORAGE_URL: http://blob-storage
+      VIDEO_CONVERTER_WEBHOOK_URL: http://video-stream-api:3000/api/v1/video_converter_webhook
+      VIDEO_CONVERTER_WEBHOOK_USER_UUID: "968565e6-61f6-45c6-ab68-963eb2c04428"
+      VIDEO_CONVERTER_BASE_URL: http://video-converter
+    depends_on:
+      - postgres
+    ports:
+      - "3000:3000"
   rabbitmq:
     image: rabbitmq:latest
     ports:
@@ -38,4 +52,4 @@ services:
       - APP_PORT=80
       - USE_CORS=true
     volumes:
-      - /media/gustavo/0cead188-0fac-43d9-9d67-98cfeb4925ce/blob-storage:/dados
+      - /media/gustavo/0cead188-0fac-43d9-9d67-98cfeb4925ce1/blob-storage:/dados

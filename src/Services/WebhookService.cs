@@ -1,6 +1,7 @@
 using System.Text;
 using Repositories;
 using Repositories.Models;
+using Services.Exceptions;
 using Services.Models;
 
 namespace Services;
@@ -114,7 +115,7 @@ public class WebhookService : IWebhookService
     var response = await _httpClient.PostAsync(webHookToEnqueue.Url, content, cancellationToken);
     if (!response.IsSuccessStatusCode)
     {
-      throw new Exception("Webhook failed to send");
+      throw new SendWebhookException(webHookToEnqueue.Url, webHookToEnqueue.SerializedData, response);
     }
   }
 

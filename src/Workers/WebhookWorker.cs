@@ -11,10 +11,9 @@ public class WebhookWorker : BaseQueueWorker<WebHookToEnqueue>
     readonly string _queueUrl;
     public WebhookWorker(
         ILogger<WebhookWorker> logger,
-        IQueueService queueService,
         QueuesConfiguration queuesConfiguration,
         IServiceScopeFactory serviceScopeFactory
-    ) : base(logger, queueService, serviceScopeFactory)
+    ) : base(logger, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.WebhookQueueName;
     }

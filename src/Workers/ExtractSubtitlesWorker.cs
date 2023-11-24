@@ -13,10 +13,9 @@ public class ExtractSubtitlesWorker : BaseQueueWorker<VideoToExtractSubtitles>
     private readonly ILogger<ExtractSubtitlesWorker> _logger;
     public ExtractSubtitlesWorker(
         ILogger<ExtractSubtitlesWorker> logger,
-        IQueueService queueService,
         QueuesConfiguration queuesConfiguration,
         IServiceScopeFactory serviceScopeFactory
-    ) : base(logger, queueService, serviceScopeFactory)
+    ) : base(logger, serviceScopeFactory)
     {
         _queueUrl = queuesConfiguration.ExtractSubtitlesQueueName;
         _logger = logger;

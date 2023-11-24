@@ -14,13 +14,11 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
     }
 
     private readonly ILogger<BaseQueueWorker<TMessageType>> _logger;
-    private readonly IQueueService _queueService;
     private readonly IServiceScopeFactory _serviceScopeFactory;
 
-    protected BaseQueueWorker(ILogger<BaseQueueWorker<TMessageType>> logger, IQueueService queueService, IServiceScopeFactory serviceScopeFactory)
+    protected BaseQueueWorker(ILogger<BaseQueueWorker<TMessageType>> logger, IServiceScopeFactory serviceScopeFactory)
     {
         _logger = logger;
-        _queueService = queueService;
         _serviceScopeFactory = serviceScopeFactory;
     }
 
@@ -35,13 +33,15 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         {
             try
             {
-                var messages = _queueService.ReadMessages<TMessageType>(QueueUrl, BatchSize);
+                using var scope = _serviceScopeFactory.CreateScope();
+                var queueService = scope.ServiceProvider.GetRequiredService<IQueueService>();
+                var messages = queueService.ReadMessages<TMessageType>(QueueUrl, BatchSize);
                 if (messages.Any())
                 {
                     var tasks = messages.Select(async message =>
                     {
-                        using var scope = _serviceScopeFactory.CreateScope();
-                        await LogAndProcessMessage(scope, message.messageId, message.message, cancellationToken);
+
+                        await LogAndProcessMessage(scope, queueService, message.messageId, message.message, cancellationToken);
                     });
                     await Task.WhenAll(tasks);
                     continue;
@@ -58,14 +58,20 @@ public abstract class BaseQueueWorker<TMessageType> : BackgroundService
         }
     }
 
-    private async Task LogAndProcessMessage(IServiceScope scope, ulong messageId, TMessageType message, CancellationToken cancellationToken)
+    private async Task LogAndProcessMessage(
+        IServiceScope scope,
+        IQueueService queueService,
+        ulong messageId,
+        TMessageType message,
+        CancellationToken cancellationToken
+    )
     {
         _logger.LogInformation($"Processing message: {messageId}");
         try
         {
             await ProcessMessage(scope, message, cancellationToken);
             _logger.LogInformation("Message {@message} processed ", messageId);
-            _queueService.DeleteMessage(messageId);
+            queueService.DeleteMessage(messageId);
         }
         catch (Exception e)
         {
